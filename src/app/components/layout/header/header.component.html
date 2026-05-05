@@ -1,7 +1,31 @@
 <header class="app-header">
   <div class="header-content">
-    <div class="logo">
-      <h1>Rice Mill Management</h1>
+    <div class="header-left">
+      <button mat-icon-button class="menu-toggle" (click)="onToggleSidebar()" matTooltip="Toggle menu">
+        <mat-icon>menu</mat-icon>
+      </button>
+
+      <div class="brand">
+        <!-- Show logo if available, else show default icon -->
+        <img *ngIf="millLogo" [src]="millLogo" alt="Mill Logo" class="brand-logo" />
+        <mat-icon *ngIf="!millLogo" class="brand-icon">agriculture</mat-icon>
+        <h1>{{ millName }}</h1>
+      </div>
+    </div>
+
+    <div class="header-right">
+      <div class="user-chip">
+        <div class="user-avatar">{{ userInitial }}</div>
+        <span class="user-name">{{ username }}</span>
+        <span class="user-type-badge">{{ userType | titlecase }}</span>
+      </div>
+
+      <button mat-icon-button
+              class="settings-btn"
+              (click)="goToPreferences()"
+              matTooltip="Preferences & Settings">
+        <mat-icon>settings</mat-icon>
+      </button>
     </div>
   </div>
 </header>

@@ -1,0 +1,89 @@
+<h2 mat-dialog-title class="dialog-title">
+  <mat-icon>shopping_bag</mat-icon>
+  {{ data.isEdit ? 'Edit Purchase' : 'New Purchase' }}
+</h2>
+
+<mat-dialog-content class="dialog-content">
+  <form [formGroup]="form">
+    <div class="form-row">
+      <mat-form-field appearance="outline" class="field-lg">
+        <mat-label>Supplier Name</mat-label>
+        <input matInput formControlName="supplier" placeholder="Enter supplier name">
+        <mat-icon matSuffix>store</mat-icon>
+        <mat-error *ngIf="form.get('supplier')?.hasError('required')">Supplier is required</mat-error>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Date</mat-label>
+        <input matInput type="date" formControlName="date">
+        <mat-error *ngIf="form.get('date')?.hasError('required')">Date is required</mat-error>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Payment Status</mat-label>
+        <mat-select formControlName="paymentStatus">
+          <mat-option *ngFor="let s of paymentStatuses" [value]="s">
+            {{ s | titlecase }}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+    </div>
+
+    <mat-divider class="section-divider"></mat-divider>
+
+    <div class="items-header">
+      <h3>Purchase Items</h3>
+      <button mat-stroked-button color="primary" type="button" (click)="addItem()">
+        <mat-icon>add</mat-icon> Add Item
+      </button>
+    </div>
+
+    <div formArrayName="items" class="items-list">
+      <div *ngFor="let item of items.controls; let i = index" [formGroupName]="i" class="item-row">
+        <span class="item-index">{{ i + 1 }}</span>
+
+        <mat-form-field appearance="outline" class="field-desc">
+          <mat-label>Description</mat-label>
+          <input matInput formControlName="description" placeholder="Item description">
+          <mat-error *ngIf="item.get('description')?.hasError('required')">Required</mat-error>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="field-num">
+          <mat-label>Qty</mat-label>
+          <input matInput type="number" formControlName="quantity" min="0.01" (input)="onItemChange(i)">
+          <mat-error *ngIf="item.get('quantity')?.hasError('required')">Required</mat-error>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="field-num">
+          <mat-label>Unit Price (₹)</mat-label>
+          <input matInput type="number" formControlName="unitPrice" min="0" (input)="onItemChange(i)">
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="field-num">
+          <mat-label>Total (₹)</mat-label>
+          <input matInput formControlName="totalPrice" readonly>
+        </mat-form-field>
+
+        <button mat-icon-button color="warn" type="button" (click)="removeItem(i)" [disabled]="items.length === 1" class="remove-btn">
+          <mat-icon>delete_outline</mat-icon>
+        </button>
+      </div>
+    </div>
+
+    <div class="total-row">
+      <span class="total-label">Total Amount:</span>
+      <span class="total-value">₹{{ totalAmount | number:'1.2-2' }}</span>
+    </div>
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions class="dialog-actions">
+  <button mat-stroked-button type="button" (click)="onCancel()">
+    <mat-icon>close</mat-icon> Cancel
+  </button>
+  <button mat-raised-button color="primary" type="button" (click)="onSave()" [disabled]="loading">
+    <mat-spinner diameter="18" *ngIf="loading"></mat-spinner>
+    <mat-icon *ngIf="!loading">save</mat-icon>
+    {{ loading ? 'Saving...' : (data.isEdit ? 'Update' : 'Save') }}
+  </button>
+</mat-dialog-actions>

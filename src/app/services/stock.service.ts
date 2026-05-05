@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { environment } from '../../environments/environment';
 
 export interface Stock {
   _id?: string;
@@ -11,18 +12,24 @@ export interface Stock {
   updatedAt?: string;
 }
 
-@Injectable({
-  providedIn: 'root'
-})
+@Injectable({ providedIn: 'root' })
 export class StockService {
-  private apiUrl = 'https://richmill-git-main-richmill123s-projects.vercel.app/api'
-  //private apiUrl = 'http://192.168.1.2:5000/api';
+  private readonly apiUrl = environment.apiUrl;
 
-  public clientId = JSON.parse(sessionStorage.getItem('user') || '');
   constructor(private http: HttpClient) {}
 
+  private getClientId(): string {
+    try {
+      const raw = sessionStorage.getItem('user');
+      if (!raw) return '';
+      const parsed = JSON.parse(raw);
+      return String(parsed?._id ?? parsed);
+    } catch { return ''; }
+  }
+
   getStocks(): Observable<Stock[]> {
-    return this.http.get<Stock[]>(`${this.apiUrl}/stock?clientId=${this.clientId}`);
+    const clientId = this.getClientId();
+    return this.http.get<Stock[]>(`${this.apiUrl}/stock?clientId=${encodeURIComponent(clientId)}`);
   }
 
   createStock(stock: Omit<Stock, '_id' | 'createdAt' | 'updatedAt'>): Observable<Stock> {
@@ -34,6 +41,7 @@ export class StockService {
   }
 
   deleteStock(id: string): Observable<any> {
-    return this.http.delete(`${this.apiUrl}/stock/${id}?clientId=${this.clientId}`);
+    const clientId = this.getClientId();
+    return this.http.delete(`${this.apiUrl}/stock/${id}?clientId=${encodeURIComponent(clientId)}`);
   }
 }

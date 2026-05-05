@@ -1,100 +1,52 @@
-.report-container {
-  padding: 24px;
-  background: #f9fafb;
-      height: calc(100% - 48px);
-}
-
-.header {
-  margin-bottom: 16px;
-
-  h2 {
-    font-size: 24px;
-    font-weight: 600;
-    color: #111827;
-  }
-}
-
-.search-card {
-  margin-bottom: 20px;
-  border-radius: 12px;
-}
-
-.search-form {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 16px;
-  align-items: start;
-}
-
-.search-btn {
-  height: 56px;
-}
-
-.action-buttons {
+.report-filters {
   display: flex;
-  gap: 12px;
-  margin-bottom: 12px;
-  justify-content: flex-end;
-}
-
-.grid-card {
-  border-radius: 12px;
-  padding: 8px;
-
-}
-
-.grid-container {
-  width: 100%;
-}
-
-.ag-theme-alpine {
-  
-  --ag-header-foreground-color: #ffffff;
-  --ag-row-hover-color: #e5e7eb;
-  --ag-odd-row-background-color: #f9fafb;
-  --ag-font-size: 14px;
-  --ag-border-color: #e5e7eb;
-}
-
-.action-btn {
-  background-color: #2563eb;
-  color: #ffffff;
-  border: none;
-  border-radius: 6px;
-  padding: 4px 10px;
-  font-size: 12px;
-  cursor: pointer;
-}
-
-.action-btn:hover {
-  background-color: #1d4ed8;
-}
-
-@media (max-width: 768px) {
-  .search-form {
-    grid-template-columns: 1fr;
-  }
-
-  .action-buttons {
-    flex-direction: column;
-    align-items: stretch;
-  }
-}
-.no-data-message {
-  display: flex;
-  justify-content: center;
   align-items: center;
-  height: 300px; 
-  color: #666;
-  text-align: center;
-  
-  .message-content {
+  flex-wrap: wrap;
+  gap: 10px;
+  flex-shrink: 0;
+
+  mat-form-field {
+    .mdc-text-field--outlined .mat-mdc-form-field-infix,
+    .mdc-text-field--no-label .mat-mdc-form-field-infix {
+      padding-top: 8px !important;
+      padding-bottom: 8px !important;
+    }
+    .mat-mdc-form-field-infix { min-height: 36px !important; }
+    .mat-mdc-floating-label { top: 50% !important; }
+    .mat-mdc-text-field-wrapper.mdc-text-field--outlined
+      .mdc-notched-outline--upgraded
+      .mdc-floating-label--float-above {
+      transform: translateY(calc(calc(6.75px + 40px / 2) * -1)) scale(0.75) !important;
+    }
+  }
+
+  button {
+    height: 40px;
+    white-space: nowrap;
     display: flex;
     align-items: center;
-    gap: 8px;
-    
-    mat-icon {
-      color: #9ca3af;
-    }
+    gap: 4px;
+  }
+}
+
+.empty-state {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted, #94a3b8);
+  gap: 10px;
+
+  mat-icon {
+    font-size: 48px;
+    width: 48px;
+    height: 48px;
+    color: var(--border-2, #cbd5e1);
+  }
+
+  p {
+    margin: 0;
+    font-size: 14px;
   }
 }

@@ -1,0 +1,8 @@
+{
+  "/api": {
+    "target": "https://rice-mill-server-latest.vercel.app",
+    "secure": true,
+    "changeOrigin": true,
+    "logLevel": "info"
+  }
+}

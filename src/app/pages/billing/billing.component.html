@@ -1,0 +1,35 @@
+<div class="page-wrap">
+  <div class="page-header">
+    <h2 class="page-title">Billing</h2>
+    <div class="page-actions">
+      <button mat-raised-button color="primary" (click)="onAddClick()">
+        <mat-icon>add</mat-icon> New Bill
+      </button>
+    </div>
+  </div>
+
+  <div class="toolbar-row">
+    <mat-form-field appearance="outline" class="search-field">
+      <mat-label>Search Bills</mat-label>
+      <input matInput placeholder="customer, bill no, status, amount…" (input)="onSearchChange($event)">
+      <mat-icon matSuffix>search</mat-icon>
+    </mat-form-field>
+  </div>
+
+  <div class="grid-wrapper ag-theme-alpine">
+    <div *ngIf="loading" class="grid-overlay">
+      <mat-spinner diameter="36"></mat-spinner>
+    </div>
+    <ag-grid-angular
+      style="width:100%;height:100%"
+      [rowData]="rowData"
+      [columnDefs]="columnDefs"
+      [defaultColDef]="defaultColDef"
+      [pagination]="true"
+      [paginationPageSize]="15"
+      [rowHeight]="44"
+      [rowSelection]="'single'"
+      (gridReady)="onGridReady($event)">
+    </ag-grid-angular>
+  </div>
+</div>

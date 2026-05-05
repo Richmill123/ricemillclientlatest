@@ -23,8 +23,9 @@
           </div>
           <div class="kpi-value">{{ formatCurrency(d.revenue.total) }}</div>
           <div class="kpi-sub">
-            <span>Sales: {{ formatCurrency(d.revenue.sales) }}</span>
             <span>Orders: {{ formatCurrency(d.revenue.orders) }}</span>
+            <span>Sales: {{ formatCurrency(d.revenue.sales) }}</span>
+            <span>Billing: {{ formatCurrency(d.revenue.billing) }}</span>
           </div>
         </mat-card>
 
@@ -37,6 +38,7 @@
           <div class="kpi-sub">
             <span>Wages: {{ formatCurrency(d.expense.wages) }}</span>
             <span>Salary: {{ formatCurrency(d.expense.salary) }}</span>
+            <span>Purchase: {{ formatCurrency(d.expense.purchase) }}</span>
           </div>
         </mat-card>
 
@@ -75,25 +77,10 @@
               <div class="right">Orders</div>
               <div class="right">Total Bags</div>
             </div>
-            <div class="row">
-              <div class="cap">Initial Stocking</div>
-              <div class="right">{{ formatNumber(d.orderStatuses.initialStocking.count) }}</div>
-              <div class="right">{{ formatNumber(d.orderStatuses.initialStocking.totalBags) }}</div>
-            </div>
-            <div class="row">
-              <div class="cap">Boiling Completed</div>
-              <div class="right">{{ formatNumber(d.orderStatuses.boilingCompleted.count) }}</div>
-              <div class="right">{{ formatNumber(d.orderStatuses.boilingCompleted.totalBags) }}</div>
-            </div>
-            <div class="row">
-              <div class="cap">Splitting Completed</div>
-              <div class="right">{{ formatNumber(d.orderStatuses.splittingCompleted.count) }}</div>
-              <div class="right">{{ formatNumber(d.orderStatuses.splittingCompleted.totalBags) }}</div>
-            </div>
-            <div class="row">
-              <div class="cap">Packed Ready</div>
-              <div class="right">{{ formatNumber(d.orderStatuses.packedReady.count) }}</div>
-              <div class="right">{{ formatNumber(d.orderStatuses.packedReady.totalBags) }}</div>
+            <div class="row" *ngFor="let row of statusRows">
+              <div class="cap">{{ row.label }}</div>
+              <div class="right">{{ formatNumber(row.count) }}</div>
+              <div class="right">{{ formatNumber(row.totalBags) }}</div>
             </div>
           </div>
         </mat-card>
@@ -180,7 +167,7 @@
               <div class="right">Qty</div>
               <div class="right">Amount</div>
             </div>
-            <div class="row" *ngFor="let key of ['bran','husk','black rice','broken rice','Karika','other']">
+            <div class="row" *ngFor="let key of outputKeys">
               <div class="cap">{{ key }}</div>
               <div class="right">{{ formatNumber(d.sales.byItemType[key]?.quantity ?? 0) }}</div>
               <div class="right">{{ formatCurrency(d.sales.byItemType[key]?.amount ?? 0) }}</div>
@@ -197,7 +184,7 @@
               <div>Item</div>
               <div class="right">Qty</div>
             </div>
-            <div class="row two-col" *ngFor="let key of ['bran','husk','black rice','broken rice','Karika','other']">
+            <div class="row two-col" *ngFor="let key of outputKeys">
               <div class="cap">{{ key }}</div>
               <div class="right">{{ formatNumber(d.stock.available[key] ?? 0) }}</div>
             </div>

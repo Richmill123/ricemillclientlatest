@@ -10,7 +10,10 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { OrderFormDialogComponent } from './order-form-dialog/order-form-dialog.component';
 import { OrderService, Order } from '../../services/order.service';
+import { PreferenceService } from '../../services/preference.service';
 import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 
 ModuleRegistry.registerModules([AllCommunityModule]);
 
@@ -25,7 +28,9 @@ ModuleRegistry.registerModules([AllCommunityModule]);
     MatIconModule,
     MatDialogModule,
     MatSnackBarModule,
-    MatFormFieldModule
+    MatFormFieldModule,
+    MatInputModule,
+    MatProgressSpinnerModule
   ],
   templateUrl: './order.component.html',
   styleUrls: ['./order.component.scss']
@@ -39,35 +44,40 @@ export class OrderComponent implements OnInit {
       headerName: 'Name',
       filter: true,
       sortable: true,
-      resizable: true
+      resizable: true,
+      minWidth: 130
     },
     {
       field: 'villageName',
       headerName: 'Village',
       filter: true,
       sortable: true,
-      resizable: true
+      resizable: true,
+      minWidth: 120
     },
     {
       field: 'phoneNumber',
       headerName: 'Phone',
       filter: true,
       sortable: true,
-      resizable: true
+      resizable: true,
+      minWidth: 130
     },
     {
       field: 'typeOfPaddy',
       headerName: 'Paddy Type',
       filter: true,
       sortable: true,
-      resizable: true
+      resizable: true,
+      minWidth: 130
     },
     {
       field: 'numberOfBags',
       headerName: 'Bags',
       filter: 'agNumberColumnFilter',
       sortable: true,
-      resizable: true
+      resizable: true,
+      minWidth: 90
     },
     {
       field: 'totalAmount',
@@ -75,7 +85,8 @@ export class OrderComponent implements OnInit {
       filter: 'agNumberColumnFilter',
       valueFormatter: this.currencyFormatter,
       sortable: true,
-      resizable: true
+      resizable: true,
+      minWidth: 130
     },
     {
       field: 'advanceAmount',
@@ -83,7 +94,8 @@ export class OrderComponent implements OnInit {
       filter: 'agNumberColumnFilter',
       valueFormatter: this.currencyFormatter,
       sortable: true,
-      resizable: true
+      resizable: true,
+      minWidth: 110
     },
     {
       field: 'createdAt',
@@ -91,16 +103,19 @@ export class OrderComponent implements OnInit {
       filter: 'agDateColumnFilter',
       valueFormatter: this.dateFormatter,
       sortable: true,
-      resizable: true
+      resizable: true,
+      minWidth: 200
     },
     {
       field: 'status',
       headerName: 'Status',
       filter: true,
       sortable: true,
-      resizable: true
+      resizable: true,
+      minWidth: 110,
+      cellStyle: (params) => this.statusCellStyle(params)
     },
-    
+
     this.createActionColumn()
   ];
 
@@ -117,10 +132,12 @@ export class OrderComponent implements OnInit {
   constructor(
     private orderService: OrderService,
     private dialog: MatDialog,
-    private snackBar: MatSnackBar
+    private snackBar: MatSnackBar,
+    private prefService: PreferenceService,
   ) { }
 
   ngOnInit(): void {
+    if (!this.prefService.snapshot) this.prefService.load().subscribe();
     this.loadOrders();
   }
 
@@ -146,7 +163,7 @@ export class OrderComponent implements OnInit {
       height: '87vh',
       disableClose: true,
       autoFocus: false,
-      data: { isEdit: false }
+      data: { isEdit: false, stages: this.prefService.snapshot?.stages ?? [] }
     });
 
     dialogRef.afterClosed().subscribe(result => {
@@ -206,23 +223,19 @@ export class OrderComponent implements OnInit {
         const editBtn = document.createElement('button');
         editBtn.className = 'mat-icon-button gridAction-edit';
         editBtn.style.color = '#3f51b5';
-        editBtn.innerHTML = '<mat-icon>edit</mat-icon>';
-
-        const componentRef = this;
-
+        editBtn.innerHTML = 'edit';
         editBtn.addEventListener('click', (e) => {
           e.stopPropagation();
-          componentRef.editOrder(params.data);
+          this.editOrder(params.data);
         });
 
         const deleteBtn = document.createElement('button');
         deleteBtn.className = 'mat-icon-button gridAction-delete';
-        deleteBtn.style.color = '#f44336';
-        deleteBtn.innerHTML = '<mat-icon>delete</mat-icon>';
+        deleteBtn.innerHTML = 'delete';
 
         deleteBtn.addEventListener('click', (e) => {
           e.stopPropagation();
-          componentRef.deleteOrder(params.data);
+          this.deleteOrder(params.data);
         });
 
         div.appendChild(editBtn);
@@ -235,8 +248,6 @@ export class OrderComponent implements OnInit {
 
   onGridReady(params: GridReadyEvent): void {
     this.gridApi = params.api;
-
-    this.gridApi.sizeColumnsToFit();
 
     this.gridApi.addEventListener('cellClicked', (event: any) => {
       const target = event.event?.target as HTMLElement;
@@ -264,14 +275,6 @@ export class OrderComponent implements OnInit {
         }
       }
     });
-
-    const gridDiv = document.querySelector('.ag-theme-alpine');
-    if (gridDiv) {
-      const resizeObserver = new ResizeObserver(() => {
-        setTimeout(() => this.gridApi.sizeColumnsToFit());
-      });
-      resizeObserver.observe(gridDiv);
-    }
   }
 
   onSearch(): void {
@@ -296,7 +299,8 @@ export class OrderComponent implements OnInit {
       autoFocus: false,
       data: {
         isEdit: true,
-        orderData: order
+        orderData: order,
+        stages: this.prefService.snapshot?.stages ?? [],
       }
     });
 

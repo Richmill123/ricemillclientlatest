@@ -7,11 +7,27 @@
     </div>
 
     <form (ngSubmit)="onSubmit(loginForm)" #loginForm="ngForm" class="login-form">
+
+      <!-- User Type Selector -->
+      <div class="user-type-selector">
+        <label class="type-label">Account Type</label>
+        <div class="type-buttons">
+          <button *ngFor="let t of userTypes"
+                  type="button"
+                  class="type-btn"
+                  [class.active]="userType === t.value"
+                  (click)="userType = t.value">
+            <mat-icon>{{ t.icon }}</mat-icon>
+            <span>{{ t.label }}</span>
+          </button>
+        </div>
+      </div>
+
       <mat-form-field appearance="outline">
         <mat-label>Username</mat-label>
-        <input matInput 
-               [(ngModel)]="username" 
-               name="username" 
+        <input matInput
+               [(ngModel)]="username"
+               name="username"
                #usernameInput="ngModel"
                required
                minlength="3"
@@ -26,19 +42,19 @@
 
       <mat-form-field appearance="outline">
         <mat-label>Password</mat-label>
-        <input matInput 
-               [type]="hidePassword ? 'password' : 'text'" 
-               [(ngModel)]="password" 
-               name="password" 
+        <input matInput
+               [type]="hidePassword ? 'password' : 'text'"
+               [(ngModel)]="password"
+               name="password"
                #passwordInput="ngModel"
                required
                minlength="6"
                autocomplete="current-password">
-        <button type="button" mat-icon-button matSuffix 
-                (click)="hidePassword = !hidePassword" 
+        <button type="button" mat-icon-button matSuffix
+                (click)="hidePassword = !hidePassword"
                 [attr.aria-label]="'Hide password'"
                 tabindex="-1">
-          <mat-icon>{{hidePassword ? 'visibility_off' : 'visibility'}}</mat-icon>
+          <mat-icon>{{ hidePassword ? 'visibility_off' : 'visibility' }}</mat-icon>
         </button>
         <mat-error *ngIf="passwordInput.invalid && (passwordInput.dirty || passwordInput.touched)">
           <span *ngIf="passwordInput.errors?.['required']">Password is required</span>
@@ -46,9 +62,9 @@
         </mat-error>
       </mat-form-field>
 
-      <button mat-raised-button 
-              color="primary" 
-              type="submit" 
+      <button mat-raised-button
+              color="primary"
+              type="submit"
               class="login-button"
               [disabled]="!loginForm.form.valid || isLoading"
               [class.button-loading]="isLoading">
@@ -58,7 +74,7 @@
     </form>
 
     <div class="login-footer">
-      <p>© 2025 Rice Mill Management System</p>
+      <p>© 2026 Rice Mill Management System</p>
     </div>
   </mat-card>
 </div>

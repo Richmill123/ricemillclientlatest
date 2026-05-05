@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { environment } from '../../environments/environment';
 
 export type DashboardItemType = 'bran' | 'husk' | 'black rice' | 'broken rice' | 'Karika' | 'other';
 
@@ -12,6 +13,7 @@ export interface AmountQuantity {
 export interface RevenueSummary {
   orders: number;
   sales: number;
+  billing: number;
   total: number;
 }
 
@@ -19,6 +21,7 @@ export interface ExpenseSummary {
   wages: number;
   salary: number;
   other: number;
+  purchase: number;
   total: number;
 }
 
@@ -35,17 +38,13 @@ export interface OrderStatus {
   count: number;
 }
 
-export interface OrderStatuses {
-  initialStocking: OrderStatus;
-  boilingCompleted: OrderStatus;
-  splittingCompleted: OrderStatus;
-  packedReady: OrderStatus;
-}
+/** Dynamic dictionary: keys are the actual status strings stored in the DB */
+export type OrderStatuses = Record<string, OrderStatus>;
 
 export interface DashboardMonth {
   month: number;
-  revenue: RevenueSummary;
-  expense: ExpenseSummary;
+  revenue: RevenueSummary & { billing?: number };
+  expense: ExpenseSummary & { purchase?: number };
   profit: number;
   sales: {
     byItemType: SalesByItemType;
@@ -79,12 +78,9 @@ export interface DashboardResponse {
   };
 }
 
-@Injectable({
-  providedIn: 'root'
-})
+@Injectable({ providedIn: 'root' })
 export class DashboardService {
-  private apiUrl = 'https://richmill-git-main-richmill123s-projects.vercel.app/api';
-  //private apiUrl = 'http://192.168.1.2:5000/api';
+  private readonly apiUrl = environment.apiUrl;
 
   constructor(private http: HttpClient) {}
 
@@ -94,9 +90,7 @@ export class DashboardService {
       if (!raw) return '';
       const parsed = JSON.parse(raw);
       return String(parsed?._id ?? parsed);
-    } catch {
-      return '';
-    }
+    } catch { return ''; }
   }
 
   getDashboard(): Observable<DashboardResponse> {

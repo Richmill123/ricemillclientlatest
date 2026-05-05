@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { environment } from '../../environments/environment';
 
 export interface Employee {
   _id?: string;
@@ -13,36 +14,43 @@ export interface Employee {
   maritalStatus: string;
   salary: number;
   debtAmount?: number;
+  advanceAmount?: number;
   clientId: string;
 }
 
-@Injectable({
-  providedIn: 'root'
-})
+@Injectable({ providedIn: 'root' })
 export class EmployeeService {
-  private apiUrl = 'https://richmill-git-main-richmill123s-projects.vercel.app/api';
-    //private apiUrl = 'http://192.168.1.2:5000/api';
-
-  public clientId = JSON.parse(sessionStorage.getItem('user') || '');
+  private readonly apiUrl = environment.apiUrl;
 
   constructor(private http: HttpClient) {}
 
-  getEmployees(): Observable<Employee[]> {
-    return this.http.get<Employee[]>(`${this.apiUrl}/employees?clientId=${this.clientId}`);
+  private getClientId(): string {
+    try {
+      const raw = sessionStorage.getItem('user');
+      if (!raw) return '';
+      const parsed = JSON.parse(raw);
+      return String(parsed?._id ?? parsed);
+    } catch { return ''; }
   }
 
-  createEmployee(employee: Omit<Employee, '_id' | 'createdAt' | 'updatedAt' | 'clientId'>): Observable<Employee> {
+  getEmployees(): Observable<Employee[]> {
+    const clientId = this.getClientId();
+    return this.http.get<Employee[]>(`${this.apiUrl}/employees?clientId=${encodeURIComponent(clientId)}`);
+  }
+
+  createEmployee(employee: Omit<Employee, '_id'>): Observable<Employee> {
     return this.http.post<Employee>(`${this.apiUrl}/employees`, employee);
   }
 
-  updateEmployee(id: string, employee: Omit<Employee, '_id' | 'createdAt' | 'updatedAt' | 'clientId'>): Observable<Employee> {
+  updateEmployee(id: string, employee: Partial<Omit<Employee, '_id'>>): Observable<Employee> {
     return this.http.put<Employee>(`${this.apiUrl}/employees/${id}`, {
       ...employee,
-      clientId: this.clientId
+      clientId: this.getClientId()
     });
   }
 
   deleteEmployee(id: string): Observable<any> {
-    return this.http.delete(`${this.apiUrl}/employees/${id}?clientId=${this.clientId}`);
+    const clientId = this.getClientId();
+    return this.http.delete(`${this.apiUrl}/employees/${id}?clientId=${encodeURIComponent(clientId)}`);
   }
 }

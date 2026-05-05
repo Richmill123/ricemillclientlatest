@@ -45,7 +45,9 @@ export class SalesFormDialogComponent implements OnInit {
   form: FormGroup;
   loading = false;
 
-  readonly itemTypes: SaleItemType[] = ['bran', 'husk', 'black rice', 'broken rice', 'Karika', 'others'];
+  private readonly defaultItemTypes: SaleItemType[] = ['bran', 'husk', 'black rice', 'broken rice', 'Karika', 'others'];
+  /** Populated from preference.output passed via dialog data */
+  itemTypes: SaleItemType[] = [];
   readonly paymentStatuses: PaymentStatus[] = ['Paid', 'Pending', 'Partially Paid'];
   readonly paymentMethods: PaymentMethod[] = ['Cash', 'UPI', 'Bank Transfer', 'Other'];
 
@@ -53,8 +55,9 @@ export class SalesFormDialogComponent implements OnInit {
     private fb: FormBuilder,
     private dialogRef: MatDialogRef<SalesFormDialogComponent>,
     private snackBar: MatSnackBar,
-    @Inject(MAT_DIALOG_DATA) public data: { isEdit: boolean; sale?: Sale }
+    @Inject(MAT_DIALOG_DATA) public data: { isEdit: boolean; sale?: Sale; itemTypes?: string[] }
   ) {
+    this.itemTypes = (data?.itemTypes?.length ? data.itemTypes : this.defaultItemTypes) as SaleItemType[];
     this.form = this.fb.group({
       name: ['', Validators.required],
       phoneNumber: ['', Validators.required],

@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { environment } from '../../environments/environment';
 
 export type SaleItemType = 'bran' | 'husk' | 'black rice' | 'broken rice' | 'Karika' | 'others';
 export type PaymentStatus = 'Paid' | 'Pending' | 'Partially Paid';
@@ -31,13 +32,9 @@ export interface Sale {
 export type SaleCreateRequest = Omit<Sale, '_id' | 'createdAt' | 'updatedAt'>;
 export type SaleUpdateRequest = Omit<Sale, '_id' | 'createdAt' | 'updatedAt'>;
 
-@Injectable({
-  providedIn: 'root'
-})
+@Injectable({ providedIn: 'root' })
 export class SalesService {
-   // private apiUrl = 'http://192.168.1.2:5000/api';
-
-  private apiUrl = 'https://richmill-git-main-richmill123s-projects.vercel.app/api';
+  private readonly apiUrl = environment.apiUrl;
 
   constructor(private http: HttpClient) {}
 
@@ -47,9 +44,7 @@ export class SalesService {
       if (!raw) return '';
       const parsed = JSON.parse(raw);
       return String(parsed?._id ?? parsed);
-    } catch {
-      return '';
-    }
+    } catch { return ''; }
   }
 
   getSales(): Observable<Sale[]> {

@@ -1,25 +1,26 @@
 <div class="app-container">
- 
-  
   <div class="main-container">
     <mat-sidenav-container class="sidenav-container">
-       <app-header *ngIf="!isLoginPage" (toggleSidebar)="toggleSidebar()"></app-header>
-      <mat-sidenav 
+
+      <mat-sidenav
         *ngIf="!isLoginPage"
-        #sidenav 
-        [mode]="isMobileView ? 'over' : 'side'" 
+        #sidenav
+        [mode]="isMobileView ? 'over' : 'side'"
         [opened]="!isMobileView || isSidebarOpen"
         [fixedInViewport]="true"
-        fixedTopGap="64"
+        [fixedTopGap]="0"
         class="sidenav">
         <app-sidebar (navigate)="onSidebarNavigate()"></app-sidebar>
       </mat-sidenav>
-      
+
       <mat-sidenav-content class="content-wrapper">
-        <div class="page-content">
+        <app-header *ngIf="!isLoginPage" (toggleSidebar)="toggleSidebar()"></app-header>
+
+        <div class="page-content" [class.scrollable]="isScrollablePage">
           <router-outlet></router-outlet>
         </div>
       </mat-sidenav-content>
+
     </mat-sidenav-container>
   </div>
 </div>

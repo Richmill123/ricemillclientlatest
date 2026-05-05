@@ -44,14 +44,7 @@ export class OrderFormDialogComponent implements OnInit {
   loading = false;
   error: string | null = null;
 
-  statusOptions = [
-    { value: ORDER_STATUS.CREATED, label: 'Created' },
-    { value: ORDER_STATUS.INITIAL_STOCKING, label: 'Initial Stocking' },
-    { value: ORDER_STATUS.BOILING_PROCESS_COMPLETED, label: 'Boiling Process Completed' },
-    { value: ORDER_STATUS.SPLITTING_PROCESS_COMPLETED, label: 'Splitting Process Completed' },
-    { value: ORDER_STATUS.PACKED_READY, label: 'Packed & Ready' },
-    { value: ORDER_STATUS.PAID_CLOSE, label: 'Paid & Close' }
-  ];
+  statusOptions: Array<{ value: string; label: string }> = [];
 
   submitted = false;
 
@@ -104,6 +97,15 @@ export class OrderFormDialogComponent implements OnInit {
     });
   }
 
+  private getClientId(): string {
+    try {
+      const raw = sessionStorage.getItem('user');
+      if (!raw) return '';
+      const parsed = JSON.parse(raw);
+      return String(parsed?._id ?? parsed);
+    } catch { return ''; }
+  }
+
   private normalizeDateForInput(value: any): string {
     if (!value) return '';
     if (typeof value === 'string') {
@@ -114,6 +116,16 @@ export class OrderFormDialogComponent implements OnInit {
   }
 
   ngOnInit() {
+    // Build status options: CREATED → each preference stage → PAID & CLOSE
+    const stages: string[] = this.data?.stages ?? [
+      'Initial Stocking', 'Boiling Process Completed', 'Splitting Process Completed', 'Packed & Ready'
+    ];
+    this.statusOptions = [
+      { value: ORDER_STATUS.CREATED, label: 'Created' },
+      ...stages.map(s => ({ value: s.toUpperCase(), label: s })),
+      { value: ORDER_STATUS.PAID_CLOSE, label: 'Paid & Close' },
+    ];
+
     if (this.isEdit && this.data?.orderData) {
       const orderData = this.data.orderData;
       this.orderForm.patchValue({
@@ -203,7 +215,7 @@ export class OrderFormDialogComponent implements OnInit {
 
     const orderData = {
       ...this.orderForm.value,
-      clientId: this.orderService.clientId
+      clientId: this.getClientId()
     };
 
     const request = this.isEdit

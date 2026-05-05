@@ -5,6 +5,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { DashboardResponse, DashboardService } from '../../services/dashboard.service';
+import { PreferenceService } from '../../services/preference.service';
 
 @Component({
   selector: 'app-dashboard',
@@ -32,10 +33,44 @@ export class DashboardComponent {
 
   constructor(
     private dashboardService: DashboardService,
-    private snackBar: MatSnackBar
+    private snackBar: MatSnackBar,
+    private prefService: PreferenceService,
   ) {}
 
+  /** Output types to use as panel keys for Sales & Stock panels */
+  get outputKeys(): string[] {
+    return this.prefService.getOutputTypes();
+  }
+
+  /**
+   * Order Status rows in preference-stage order.
+   * Always starts with CREATED, ends with PAID & CLOSE.
+   * Middle entries come from preference.stages (mapped to uppercase status values).
+   * Rows with count = 0 are still shown so the table structure stays consistent.
+   */
+  get statusRows(): Array<{ label: string; statusKey: string; count: number; totalBags: number }> {
+    const statuses = this.data?.orderStatuses ?? {};
+    const stages   = this.prefService.snapshot?.stages ?? [];
+
+    const orderedKeys = [
+      'CREATED',
+      ...stages.map(s => s.toUpperCase()),
+      'PAID & CLOSE',
+    ];
+
+    // Also include any keys in the data that aren't in the preference list
+    const extraKeys = Object.keys(statuses).filter(k => !orderedKeys.includes(k));
+
+    return [...orderedKeys, ...extraKeys].map(key => ({
+      label:     key.charAt(0).toUpperCase() + key.slice(1).toLowerCase(),
+      statusKey: key,
+      count:     statuses[key]?.count     ?? 0,
+      totalBags: statuses[key]?.totalBags ?? 0,
+    }));
+  }
+
   ngOnInit(): void {
+    if (!this.prefService.snapshot) this.prefService.load().subscribe();
     this.loadDashboard();
   }
 

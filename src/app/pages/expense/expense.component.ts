@@ -72,24 +72,13 @@ export class ExpenseComponent {
 
         const editBtn = document.createElement('button');
         editBtn.className = 'mat-icon-button gridAction-edit';
-        editBtn.style.color = '#3f51b5';
-        editBtn.innerHTML = '<mat-icon>edit</mat-icon>';
-
-        const componentRef = this;
-        editBtn.addEventListener('click', (e) => {
-          e.stopPropagation();
-          componentRef.onEditClick(params.data?._id);
-        });
+        editBtn.innerHTML = 'edit';
+        editBtn.addEventListener('click', (e) => { e.stopPropagation(); this.onEditClick(params.data?._id); });
 
         const deleteBtn = document.createElement('button');
         deleteBtn.className = 'mat-icon-button gridAction-delete';
-        deleteBtn.style.color = '#f44336';
-        deleteBtn.innerHTML = '<mat-icon>delete</mat-icon>';
-
-        deleteBtn.addEventListener('click', (e) => {
-          e.stopPropagation();
-          componentRef.onDeleteClick(params.data?._id, params.data?.item);
-        });
+        deleteBtn.innerHTML = 'delete';
+        deleteBtn.addEventListener('click', (e) => { e.stopPropagation(); this.onDeleteClick(params.data?._id, params.data?.item); });
 
         div.appendChild(editBtn);
         div.appendChild(deleteBtn);

@@ -12,6 +12,7 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { debounceTime, distinctUntilChanged, Subject } from 'rxjs';
 import { Sale, SaleItem, SalesService } from '../../services/sales.service';
 import { SalesDialogResult, SalesFormDialogComponent } from './sales-form-dialog/sales-form-dialog.component';
+import { PreferenceService } from '../../services/preference.service';
 
 @Component({
   selector: 'app-sales',
@@ -38,40 +39,43 @@ export class SalesComponent {
   private searchSubject = new Subject<string>();
 
   columnDefs: ColDef[] = [
-    { field: 'name', headerName: 'Name', sortable: true, filter: true, flex: 1 },
-    { field: 'phoneNumber', headerName: 'Phone', sortable: true, filter: true, width: 150 },
-    { field: 'address', headerName: 'Address', sortable: true, filter: true, flex: 1 },
+    { field: 'name', headerName: 'Customer', sortable: true, filter: true, minWidth: 130, flex: 1 },
+    { field: 'phoneNumber', headerName: 'Phone', sortable: true, filter: true, width: 130 },
     {
       headerName: 'Items',
       field: 'items',
       sortable: false,
       filter: false,
-      flex: 1,
-      valueGetter: (params) => this.formatItems(params.data?.items)
+      minWidth: 160,
+      flex: 1.5,
+      valueGetter: (params: any) => this.formatItems(params.data?.items)
     },
-    { field: 'totalAmount', headerName: 'Total', sortable: true, filter: true, width: 140 },
-    { field: 'mydebt', headerName: 'My Debt', sortable: true, filter: true, width: 140 },
-    { field: 'balance', headerName: 'Balance', sortable: true, filter: true, width: 140, valueGetter: (params) => params.data?.balance || 0 },
-    { 
-      headerName: 'Balance - My Debt', 
-      sortable: true, 
-      filter: true, 
-      width: 160,
-      valueGetter: (params) => {
-        const totalAmount = params.data?.totalAmount || 0;
-        const mydebt = params.data?.mydebt || 0;
-        return mydebt - totalAmount > 0 ? mydebt - totalAmount : 0;
+    {
+      field: 'totalAmount', headerName: 'Total (₹)', sortable: true, filter: true, width: 120,
+      valueFormatter: (p: any) => `₹${Number(p.value ?? 0).toLocaleString('en-IN')}`
+    },
+    {
+      field: 'mydebt', headerName: 'My Debt (₹)', sortable: true, filter: true, width: 120,
+      valueFormatter: (p: any) => `₹${Number(p.value ?? 0).toLocaleString('en-IN')}`
+    },
+    {
+      field: 'paymentStatus', headerName: 'Status', sortable: true, filter: true, width: 120,
+      cellRenderer: (p: ICellRendererParams) => {
+        const s = String(p.value ?? '').toLowerCase();
+        const map: Record<string, { bg: string; color: string }> = {
+          paid:            { bg: '#dcfce7', color: '#166534' },
+          'partially paid':{ bg: '#fef9c3', color: '#854d0e' },
+          pending:         { bg: '#fee2e2', color: '#991b1b' },
+        };
+        const c = map[s] ?? { bg: '#f1f5f9', color: '#475569' };
+        return `<span style="background:${c.bg};color:${c.color};padding:2px 9px;border-radius:12px;font-size:11px;font-weight:600;text-transform:capitalize">${p.value ?? '-'}</span>`;
       }
     },
-    { field: 'paymentStatus', headerName: 'Status', sortable: true, filter: true, width: 150 },
-    { field: 'paymentMethod', headerName: 'Method', sortable: true, filter: true, width: 150 },
+    { field: 'paymentMethod', headerName: 'Method', sortable: true, filter: true, width: 110 },
     {
-      field: 'createdAt',
-      headerName: 'Created At',
-      filter: 'agDateColumnFilter',
-      valueFormatter: this.dateFormatter,
-      sortable: true,
-      resizable: true
+      field: 'createdAt', headerName: 'Date',
+      filter: 'agDateColumnFilter', valueFormatter: this.dateFormatter,
+      sortable: true, width: 110
     },
     {
       headerName: 'Actions',
@@ -85,24 +89,13 @@ export class SalesComponent {
 
         const editBtn = document.createElement('button');
         editBtn.className = 'mat-icon-button gridAction-edit';
-        editBtn.style.color = '#3f51b5';
-        editBtn.innerHTML = '<mat-icon>edit</mat-icon>';
-
-        const componentRef = this;
-        editBtn.addEventListener('click', (e) => {
-          e.stopPropagation();
-          componentRef.onEditClick(params.data?._id);
-        });
+        editBtn.innerHTML = 'edit';
+        editBtn.addEventListener('click', (e) => { e.stopPropagation(); this.onEditClick(params.data?._id); });
 
         const deleteBtn = document.createElement('button');
         deleteBtn.className = 'mat-icon-button gridAction-delete';
-        deleteBtn.style.color = '#f44336';
-        deleteBtn.innerHTML = '<mat-icon>delete</mat-icon>';
-
-        deleteBtn.addEventListener('click', (e) => {
-          e.stopPropagation();
-          componentRef.onDeleteClick(params.data?._id);
-        });
+        deleteBtn.innerHTML = 'delete';
+        deleteBtn.addEventListener('click', (e) => { e.stopPropagation(); this.onDeleteClick(params.data?._id); });
 
         div.appendChild(editBtn);
         div.appendChild(deleteBtn);
@@ -112,16 +105,17 @@ export class SalesComponent {
   ];
 
   defaultColDef: ColDef = {
-    flex: 1,
-    minWidth: 100,
-    resizable: true
+    resizable: true,
+    minWidth: 80,
+    suppressSizeToFit: false,
   };
 
   constructor(
     private salesService: SalesService,
     private dialog: MatDialog,
     private zone: NgZone,
-    private snackBar: MatSnackBar
+    private snackBar: MatSnackBar,
+    private prefService: PreferenceService,
   ) {
     this.searchSubject.pipe(
       debounceTime(300),
@@ -142,21 +136,13 @@ export class SalesComponent {
       return '';
     }
   }
-  dateFormatter(params: any) {
-    const date = new Date(params.value);
-    const options: Intl.DateTimeFormatOptions = {
-      weekday: 'short',
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
-      timeZoneName: 'short'
-    };
-    return date.toLocaleString('en-IN', options).replace('GMT+5:30', 'IST');
+  dateFormatter(params: any): string {
+    if (!params?.value) return '-';
+    const d = new Date(params.value);
+    return isNaN(d.getTime()) ? '-' : d.toLocaleDateString('en-IN');
   }
   ngOnInit(): void {
+    if (!this.prefService.snapshot) this.prefService.load().subscribe();
     this.loadSales();
   }
 
@@ -207,7 +193,7 @@ export class SalesComponent {
       maxWidth: '95vw',
       disableClose: true,
       autoFocus: false,
-      data: { isEdit: false }
+      data: { isEdit: false, itemTypes: this.prefService.getOutputTypes() }
     });
 
     dialogRef.afterClosed().subscribe((result?: SalesDialogResult) => {
@@ -241,7 +227,7 @@ export class SalesComponent {
         maxWidth: '95vw',
         disableClose: true,
         autoFocus: false,
-        data: { isEdit: true, sale: { ...sale } }
+        data: { isEdit: true, sale: { ...sale }, itemTypes: this.prefService.getOutputTypes() }
       });
 
       dialogRef.afterClosed().subscribe((result?: SalesDialogResult) => {

@@ -10,7 +10,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { Expense, PaymentMethod } from '../../../services/expense.service';
+import { Income, PaymentMethod } from '../../../services/income.service';
 
 export type IncomeDialogResult = {
   item: string;
@@ -18,7 +18,6 @@ export type IncomeDialogResult = {
   amount: number;
   category?: string;
   date: string;
-  createdAt: string;
   paymentMethod: PaymentMethod;
   receiptNumber?: string;
 };
@@ -51,7 +50,7 @@ export class IncomeFormDialogComponent implements OnInit {
     private fb: FormBuilder,
     private dialogRef: MatDialogRef<IncomeFormDialogComponent>,
     private snackBar: MatSnackBar,
-    @Inject(MAT_DIALOG_DATA) public data: { isEdit: boolean; expense?: Expense }
+    @Inject(MAT_DIALOG_DATA) public data: { isEdit: boolean; income?: Income }
   ) {
     const today = new Date().toISOString().slice(0, 10);
 
@@ -64,15 +63,11 @@ export class IncomeFormDialogComponent implements OnInit {
       paymentMethod: ['Cash' as PaymentMethod, [Validators.required]],
       receiptNumber: ['']
     });
-
-    this.dialogRef.afterOpened().subscribe(() => {
-      this.ngOnInit();
-    });
   }
 
   ngOnInit(): void {
-    if (this.data?.isEdit && this.data.expense) {
-      const e = this.data.expense;
+    if (this.data?.isEdit && this.data.income) {
+      const e = this.data.income;
       this.form.patchValue({
         item: e.item ?? '',
         description: e.description ?? '',
@@ -89,14 +84,12 @@ export class IncomeFormDialogComponent implements OnInit {
     if (this.form.invalid) {
       this.form.markAllAsTouched();
       this.snackBar.open('Please fill all required fields correctly', 'OK', {
-        duration: 3000,
-        panelClass: ['error-snackbar']
+        duration: 3000, panelClass: ['error-snackbar']
       });
       return;
     }
 
     this.loading = true;
-
     const raw = this.form.getRawValue();
 
     const result: IncomeDialogResult = {
@@ -105,7 +98,6 @@ export class IncomeFormDialogComponent implements OnInit {
       amount: Number(raw.amount ?? 0),
       category: raw.category ? String(raw.category).trim() : '',
       date: String(raw.date).trim(),
-      createdAt: String(raw.date).trim(),
       paymentMethod: String(raw.paymentMethod).trim() as PaymentMethod,
       receiptNumber: raw.receiptNumber ? String(raw.receiptNumber).trim() : ''
     };

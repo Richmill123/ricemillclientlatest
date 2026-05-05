@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { environment } from '../../environments/environment';
 
 export interface Order {
   _id: string;
@@ -18,33 +19,39 @@ export interface Order {
   updatedAt: string;
 }
 
-@Injectable({
-  providedIn: 'root'
-})
+@Injectable({ providedIn: 'root' })
 export class OrderService {
-  private apiUrl = 'https://richmill-git-main-richmill123s-projects.vercel.app/api';
-   // private apiUrl = 'http://192.168.1.2:5000/api';
-
-  public clientId = JSON.parse(sessionStorage.getItem('user') || '');
+  private readonly apiUrl = environment.apiUrl;
 
   constructor(private http: HttpClient) {}
 
-  getOrders(): Observable<Order[]> {
-    return this.http.get<Order[]>(`${this.apiUrl}/orders?clientId=${this.clientId}`);
+  private getClientId(): string {
+    try {
+      const raw = sessionStorage.getItem('user');
+      if (!raw) return '';
+      const parsed = JSON.parse(raw);
+      return String(parsed?._id ?? parsed);
+    } catch { return ''; }
   }
 
-  createOrder(order: Omit<Order, '_id' | 'createdAt' | 'updatedAt' | 'clientId'>): Observable<Order> {
+  getOrders(): Observable<Order[]> {
+    const clientId = this.getClientId();
+    return this.http.get<Order[]>(`${this.apiUrl}/orders?clientId=${encodeURIComponent(clientId)}`);
+  }
+
+  createOrder(order: Omit<Order, '_id' | 'createdAt' | 'updatedAt'>): Observable<Order> {
     return this.http.post<Order>(`${this.apiUrl}/orders`, order);
   }
 
-  updateOrder(id: string, order: Omit<Order, '_id' | 'createdAt' | 'updatedAt' | 'clientId'>): Observable<Order> {
+  updateOrder(id: string, order: Partial<Omit<Order, '_id' | 'createdAt' | 'updatedAt'>>): Observable<Order> {
     return this.http.put<Order>(`${this.apiUrl}/orders/${id}`, {
       ...order,
-      clientId: this.clientId
+      clientId: this.getClientId()
     });
   }
 
   deleteOrder(id: string): Observable<any> {
-    return this.http.delete(`${this.apiUrl}/orders/${id}?clientId=${this.clientId}`);
+    const clientId = this.getClientId();
+    return this.http.delete(`${this.apiUrl}/orders/${id}?clientId=${encodeURIComponent(clientId)}`);
   }
 }

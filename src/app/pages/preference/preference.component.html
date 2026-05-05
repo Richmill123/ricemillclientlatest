@@ -1,0 +1,415 @@
+<div class="pref-container">
+
+  <!-- Page header -->
+  <div class="pref-header">
+    <div class="pref-title">
+      <mat-icon>settings</mat-icon>
+      <div>
+        <h1>Preferences</h1>
+        <p>Configure your rice mill settings — changes affect PDFs, stock types, and calculations</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading overlay -->
+  <div class="pref-loading" *ngIf="loading">
+    <mat-spinner diameter="36"></mat-spinner>
+    <span>Loading preferences…</span>
+  </div>
+
+  <ng-container *ngIf="!loading">
+
+    <!-- ── 1. Mill Information ─────────────────────────────────────────── -->
+    <div class="pref-card" [formGroup]="form">
+      <div class="card-header">
+        <mat-icon class="card-icon mill-icon">business</mat-icon>
+        <span>Mill Information</span>
+        <span class="card-hint">Appears on invoices and PDF reports</span>
+      </div>
+      <mat-divider></mat-divider>
+
+      <div class="card-body">
+        <!-- Logo row -->
+        <div class="logo-row">
+          <div class="logo-preview-wrap">
+            <img *ngIf="logoPreview" [src]="logoPreview" alt="Mill Logo" class="logo-preview" />
+            <div *ngIf="!logoPreview" class="logo-placeholder">
+              <mat-icon>image</mat-icon>
+              <span>No logo</span>
+            </div>
+          </div>
+
+          <div class="logo-actions">
+            <p class="logo-hint">
+              Upload your mill logo (JPG/PNG, max 2 MB).<br>
+              It will appear on all generated PDFs.
+            </p>
+            <div class="logo-btns">
+              <label class="upload-btn mat-stroked-button" matTooltip="Choose logo file">
+                <mat-icon>upload</mat-icon>
+                {{ logoPreview ? 'Change Logo' : 'Upload Logo' }}
+                <input type="file" accept="image/*" (change)="onLogoSelected($event)" hidden />
+              </label>
+              <button mat-icon-button color="warn" *ngIf="logoPreview"
+                      (click)="removeLogo()" matTooltip="Remove logo">
+                <mat-icon>delete_outline</mat-icon>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <mat-divider class="inner-divider"></mat-divider>
+
+        <!-- Info fields -->
+        <div class="info-grid">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Mill / Company Name *</mat-label>
+            <input matInput formControlName="name" placeholder="e.g. Sri Lakshmi Rice Mill" />
+            <mat-icon matSuffix>agriculture</mat-icon>
+            <mat-error *ngIf="form.get('name')?.hasError('required')">Name is required</mat-error>
+            <mat-error *ngIf="form.get('name')?.hasError('minlength')">Minimum 2 characters</mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Phone Number</mat-label>
+            <input matInput formControlName="phoneNumber" placeholder="e.g. 9876543210" />
+            <mat-icon matSuffix>phone</mat-icon>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>GST Percentage (%)</mat-label>
+            <input matInput type="number" formControlName="gstPercentage" min="0" max="100" />
+            <mat-icon matSuffix>percent</mat-icon>
+            <mat-hint>Applied automatically in billing PDFs</mat-hint>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Address</mat-label>
+            <textarea matInput formControlName="address" rows="2"
+                      placeholder="123 Mill Road, Agricultural District, State 123456"></textarea>
+            <mat-icon matSuffix>location_on</mat-icon>
+          </mat-form-field>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── 2. Mill Operations ─────────────────────────────────────────── -->
+    <div class="pref-card" [formGroup]="form">
+      <div class="card-header">
+        <mat-icon class="card-icon ops-icon">precision_manufacturing</mat-icon>
+        <span>Mill Operations</span>
+        <span class="card-hint">Used in stock, orders &amp; sales calculations</span>
+      </div>
+      <mat-divider></mat-divider>
+
+      <div class="card-body">
+        <!-- Bag weights -->
+        <div class="ops-grid">
+          <mat-form-field appearance="outline">
+            <mat-label>Purchase Bag Weight (kg)</mat-label>
+            <input matInput type="number" formControlName="bagInKg" min="1" />
+            <mat-icon matSuffix>scale</mat-icon>
+            <mat-hint>Weight per bag for incoming stock</mat-hint>
+            <mat-error *ngIf="form.get('bagInKg')?.hasError('required')">Required</mat-error>
+            <mat-error *ngIf="form.get('bagInKg')?.hasError('min')">Must be ≥ 1</mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Sales Bag Weight (kg)</mat-label>
+            <input matInput type="number" formControlName="salesBagInKg" min="1" />
+            <mat-icon matSuffix>scale</mat-icon>
+            <mat-hint>Weight per bag for sales</mat-hint>
+            <mat-error *ngIf="form.get('salesBagInKg')?.hasError('required')">Required</mat-error>
+            <mat-error *ngIf="form.get('salesBagInKg')?.hasError('min')">Must be ≥ 1</mat-error>
+          </mat-form-field>
+        </div>
+
+        <!-- Output types -->
+        <div class="tag-section">
+          <div class="tag-label">
+            <mat-icon>inventory_2</mat-icon>
+            <strong>Output Types</strong>
+            <span class="tag-hint">Used as stock item categories</span>
+          </div>
+
+          <div class="tag-list">
+            <span class="tag-chip" *ngFor="let tag of outputTypes">
+              {{ tag }}
+              <button class="tag-remove" (click)="removeOutputTag(tag)" matTooltip="Remove">
+                <mat-icon>close</mat-icon>
+              </button>
+            </span>
+          </div>
+
+          <div class="tag-add-row">
+            <mat-form-field appearance="outline" class="tag-input">
+              <mat-label>Add output type</mat-label>
+              <input matInput [(ngModel)]="newOutputTag" [ngModelOptions]="{standalone:true}"
+                     (keydown)="onTagKeydown($event, 'output')" placeholder="e.g. rice bran oil" />
+            </mat-form-field>
+            <button mat-stroked-button (click)="addOutputTag()" [disabled]="!newOutputTag.trim()">
+              <mat-icon>add</mat-icon> Add
+            </button>
+          </div>
+        </div>
+
+        <!-- Processing stages -->
+        <div class="tag-section">
+          <div class="tag-label">
+            <mat-icon>account_tree</mat-icon>
+            <strong>Processing Stages</strong>
+            <span class="tag-hint">Used in order workflow</span>
+          </div>
+
+          <div class="tag-list">
+            <span class="tag-chip stages" *ngFor="let stage of stages">
+              {{ stage }}
+              <button class="tag-remove" (click)="removeStageTag(stage)" matTooltip="Remove">
+                <mat-icon>close</mat-icon>
+              </button>
+            </span>
+          </div>
+
+          <div class="tag-add-row">
+            <mat-form-field appearance="outline" class="tag-input">
+              <mat-label>Add stage</mat-label>
+              <input matInput [(ngModel)]="newStageTag" [ngModelOptions]="{standalone:true}"
+                     (keydown)="onTagKeydown($event, 'stage')" placeholder="e.g. Drying" />
+            </mat-form-field>
+            <button mat-stroked-button (click)="addStageTag()" [disabled]="!newStageTag.trim()">
+              <mat-icon>add</mat-icon> Add
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ── 3. Invoice & Bank Details ────────────────────────────────────── -->
+    <div class="pref-card" [formGroup]="form">
+      <div class="card-header">
+        <mat-icon class="card-icon invoice-icon">receipt_long</mat-icon>
+        <span>Invoice &amp; Bank Details</span>
+        <span class="card-hint">Printed on billing PDFs</span>
+      </div>
+      <mat-divider></mat-divider>
+
+      <div class="card-body">
+        <div class="info-grid">
+
+          <mat-form-field appearance="outline">
+            <mat-label>GSTIN</mat-label>
+            <input matInput formControlName="gstin" placeholder="e.g. 33AABCU9603R1ZX" />
+            <mat-icon matSuffix>verified</mat-icon>
+            <mat-hint>15-character GST Identification Number</mat-hint>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Email</mat-label>
+            <input matInput formControlName="email" type="email" placeholder="mill@example.com" />
+            <mat-icon matSuffix>email</mat-icon>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Place of Supply</mat-label>
+            <input matInput formControlName="placeOfSupply" placeholder="e.g. 33-TAMIL NADU" />
+            <mat-icon matSuffix>place</mat-icon>
+            <mat-hint>State code + State name as per GST</mat-hint>
+          </mat-form-field>
+
+        </div>
+
+        <mat-divider class="inner-divider"></mat-divider>
+
+        <div class="tag-label" style="margin-bottom:10px">
+          <mat-icon>account_balance</mat-icon>
+          <strong>Bank Details</strong>
+        </div>
+
+        <div class="info-grid">
+
+          <mat-form-field appearance="outline">
+            <mat-label>Bank Name</mat-label>
+            <input matInput formControlName="bankName" placeholder="e.g. State Bank of India" />
+            <mat-icon matSuffix>account_balance</mat-icon>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Account Number</mat-label>
+            <input matInput formControlName="bankAccount" placeholder="e.g. 123456789012" />
+            <mat-icon matSuffix>credit_card</mat-icon>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>IFSC Code</mat-label>
+            <input matInput formControlName="bankIfsc" placeholder="e.g. SBIN0001234" />
+            <mat-icon matSuffix>tag</mat-icon>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Branch</mat-label>
+            <input matInput formControlName="bankBranch" placeholder="e.g. City Main Branch" />
+            <mat-icon matSuffix>store</mat-icon>
+          </mat-form-field>
+
+        </div>
+
+        <mat-divider class="inner-divider"></mat-divider>
+
+        <!-- Signature upload -->
+        <div class="tag-label" style="margin-bottom:10px">
+          <mat-icon>draw</mat-icon>
+          <strong>Authorized Signatory Signature</strong>
+          <span class="tag-hint">Appears in the invoice's signatory box</span>
+        </div>
+
+        <div class="logo-row">
+          <div class="logo-preview-wrap sig-preview-wrap">
+            <img *ngIf="signaturePreview" [src]="signaturePreview" alt="Signature"
+                 class="sig-preview" />
+            <div *ngIf="!signaturePreview" class="logo-placeholder sig-placeholder">
+              <mat-icon>gesture</mat-icon>
+              <span>No signature</span>
+            </div>
+          </div>
+
+          <div class="logo-actions">
+            <p class="logo-hint">
+              Upload a photo of the authorized signatory's signature.<br>
+              Shown on generated invoices (JPG/PNG, max 2 MB).
+            </p>
+            <div class="logo-btns">
+              <label class="upload-btn mat-stroked-button" matTooltip="Choose signature file">
+                <mat-icon>upload</mat-icon>
+                {{ signaturePreview ? 'Change Signature' : 'Upload Signature' }}
+                <input type="file" accept="image/*" (change)="onSignatureSelected($event)" hidden />
+              </label>
+              <button mat-icon-button color="warn" *ngIf="signaturePreview"
+                      (click)="removeSignature()" matTooltip="Remove signature">
+                <mat-icon>delete_outline</mat-icon>
+              </button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ── 4. Module Visibility ──────────────────────────────────────── -->
+    <div class="pref-card">
+      <div class="card-header">
+        <mat-icon class="card-icon module-icon">view_sidebar</mat-icon>
+        <span>Module Visibility</span>
+        <span class="card-hint">Controls which items appear in the sidebar</span>
+      </div>
+      <mat-divider></mat-divider>
+
+      <div class="card-body">
+        <div class="module-grid">
+          <div class="module-toggle-item" *ngFor="let mod of allModules">
+            <div class="module-toggle-left">
+              <span class="module-icon-wrap"><mat-icon>{{ mod.icon }}</mat-icon></span>
+              <span class="module-toggle-label">{{ mod.label }}</span>
+            </div>
+            <mat-slide-toggle
+              [checked]="isModuleOn(mod.key)"
+              (change)="toggleModule(mod.key)"
+              color="primary">
+            </mat-slide-toggle>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── 5. Profile / Account ───────────────────────────────────────── -->
+    <div class="pref-card">
+      <div class="card-header">
+        <mat-icon class="card-icon profile-icon">account_circle</mat-icon>
+        <span>Profile &amp; Account</span>
+      </div>
+      <mat-divider></mat-divider>
+
+      <div class="card-body">
+        <!-- User info row -->
+        <div class="avatar-section">
+          <div class="avatar"><mat-icon>person</mat-icon></div>
+          <div class="user-info">
+            <h2>{{ username || 'User' }}</h2>
+          </div>
+        </div>
+
+        <mat-divider class="inner-divider"></mat-divider>
+
+        <div class="settings-grid">
+
+          <!-- Currency -->
+          <div class="setting-item">
+            <mat-form-field appearance="outline" class="w-full">
+              <mat-label>Currency</mat-label>
+              <mat-select [(ngModel)]="currency">
+                <mat-option *ngFor="let c of currencies" [value]="c">{{ c }}</mat-option>
+              </mat-select>
+              <mat-icon matSuffix>currency_rupee</mat-icon>
+            </mat-form-field>
+          </div>
+
+          <!-- Date Format -->
+          <div class="setting-item">
+            <mat-form-field appearance="outline" class="w-full">
+              <mat-label>Date Format</mat-label>
+              <mat-select [(ngModel)]="dateFormat">
+                <mat-option *ngFor="let f of dateFormats" [value]="f">{{ f }}</mat-option>
+              </mat-select>
+              <mat-icon matSuffix>calendar_today</mat-icon>
+            </mat-form-field>
+          </div>
+
+          <!-- Notifications -->
+          <div class="setting-item toggle-item full-width">
+            <div class="toggle-label">
+              <mat-icon>notifications</mat-icon>
+              <div>
+                <strong>Notifications</strong>
+                <small>Show toast messages for create / update / delete actions</small>
+              </div>
+            </div>
+            <mat-slide-toggle [(ngModel)]="enableNotifications" color="primary"></mat-slide-toggle>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- ── 6. About ───────────────────────────────────────────────────── -->
+    <div class="pref-card">
+      <div class="card-header">
+        <mat-icon class="card-icon info-icon">info</mat-icon>
+        <span>About</span>
+      </div>
+      <mat-divider></mat-divider>
+      <div class="card-body about-body">
+        <div class="about-row">
+          <mat-icon>agriculture</mat-icon>
+          <div><strong>Rice Mill Management System</strong><small>Version 1.0.0</small></div>
+        </div>
+        <div class="about-row">
+          <mat-icon>code</mat-icon>
+          <div><strong>Platform</strong><small>Angular 17 + Express + MongoDB</small></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Actions ────────────────────────────────────────────────────── -->
+    <div class="pref-actions">
+      <button mat-stroked-button color="warn" (click)="logout()">
+        <mat-icon>logout</mat-icon> Logout
+      </button>
+      <button mat-raised-button color="primary" (click)="savePreferences()" [disabled]="saving">
+        <mat-spinner *ngIf="saving" diameter="18" class="btn-spinner"></mat-spinner>
+        <mat-icon *ngIf="!saving">save</mat-icon>
+        {{ saving ? 'Saving…' : 'Save Preferences' }}
+      </button>
+    </div>
+
+  </ng-container>
+</div>

@@ -1,4 +1,4 @@
-import { Component, NgZone } from '@angular/core';
+import { Component, NgZone, OnInit } from '@angular/core';
 import { ColDef, GridReadyEvent, GridApi, ICellRendererParams, ValueFormatterParams } from 'ag-grid-community';
 import { AgGridModule } from 'ag-grid-angular';
 import { CommonModule } from '@angular/common';
@@ -28,9 +28,8 @@ import { MatInputModule } from '@angular/material/input';
   templateUrl: './employee.component.html',
   styleUrls: ['./employee.component.scss']
 })
-export class EmployeeComponent {
+export class EmployeeComponent implements OnInit {
   private gridApi!: GridApi;
-  public clientId = JSON.parse(sessionStorage.getItem('user') || '');
 
   rowData: any[] = [];
   loading = false;
@@ -38,96 +37,45 @@ export class EmployeeComponent {
   private searchSubject = new Subject<string>();
 
   columnDefs: ColDef[] = [
+    { field: 'name', headerName: 'Name', sortable: true, filter: true, flex: 1, minWidth: 140 },
+    { field: 'phoneNumber', headerName: 'Phone', sortable: true, filter: true, width: 150 },
+    { field: 'gender', headerName: 'Gender', sortable: true, filter: true, width: 110 },
     {
-      field: 'name',
-      headerName: 'Name',
-      sortable: true,
-      filter: true,
-      flex: 1
+      field: 'salary', headerName: 'Salary', sortable: true, filter: true, width: 130,
+      valueFormatter: (p: ValueFormatterParams) => this.currencyFormatter(p)
     },
     {
-      field: 'phoneNumber',
-      headerName: 'Phone',
-      sortable: true,
-      filter: true,
-      width: 150
+      field: 'debtAmount', headerName: 'Debt', sortable: true, filter: true, width: 130,
+      valueFormatter: (p: ValueFormatterParams) => this.currencyFormatter(p)
     },
     {
-      field: 'gender',
-      headerName: 'Gender',
-      sortable: true,
-      filter: true,
-      width: 120
+      field: 'advanceAmount', headerName: 'Advance Debt', sortable: true, filter: true, width: 140,
+      valueFormatter: (p: ValueFormatterParams) => this.currencyFormatter(p)
     },
     {
-      field: 'salary',
-      headerName: 'Salary',
-      sortable: true,
-      filter: true,
-      width: 150,
-      valueFormatter: this.currencyFormatter
-    },
-    {
-      field: 'debtAmount',
-      headerName: 'Debt',
-      sortable: true,
-      filter: true,
-      width: 150,
-      valueFormatter: this.currencyFormatter
-    },
-    {
-      field: 'advanceAmount',
-      headerName: 'Advance Debt',
-      sortable: true,
-      filter: true,
-      width: 150,
-      valueFormatter: this.currencyFormatter
-    },
-    {
-      headerName: 'Actions',
-      field: 'actions',
-      sortable: false,
-      filter: false,
-      width: 120,
+      headerName: 'Actions', field: 'actions', sortable: false, filter: false, width: 120,
       cellRenderer: (params: ICellRendererParams) => {
         const div = document.createElement('div');
         div.className = 'gridActionBtnWrap';
 
         const editBtn = document.createElement('button');
         editBtn.className = 'mat-icon-button gridAction-edit';
-        editBtn.style.color = '#3f51b5';
-        editBtn.innerHTML = '<mat-icon>edit</mat-icon>';
-
-        const componentRef = this;
-
-        editBtn.addEventListener('click', (e) => {
-          e.stopPropagation();
-          componentRef.onEditClick(params.data._id);
-        });
+        editBtn.innerHTML = 'edit';
+        editBtn.addEventListener('click', (e) => { e.stopPropagation(); this.onEditClick(params.data._id); });
 
         const deleteBtn = document.createElement('button');
         deleteBtn.className = 'mat-icon-button gridAction-delete';
-        deleteBtn.style.color = '#f44336';
-        deleteBtn.innerHTML = '<mat-icon>delete</mat-icon>';
-
-        deleteBtn.addEventListener('click', (e) => {
-          e.stopPropagation();
-          componentRef.onDeleteClick(params.data._id);
-        });
+        deleteBtn.innerHTML = 'delete';
+        deleteBtn.addEventListener('click', (e) => { e.stopPropagation(); this.onDeleteClick(params.data._id); });
 
         div.appendChild(editBtn);
         div.appendChild(deleteBtn);
-
         return div;
       }
     }
   ];
 
-  defaultColDef = {
-    flex: 1,
-    minWidth: 100,
-    resizable: true,
-  };
+  defaultColDef: ColDef = { flex: 1, minWidth: 100, resizable: true };
 
   constructor(
     private employeeService: EmployeeService,
@@ -135,11 +83,8 @@ export class EmployeeComponent {
     private zone: NgZone,
     private snackBar: MatSnackBar
   ) {
-    this.searchSubject.pipe(
-      debounceTime(300),
-      distinctUntilChanged()
-    ).subscribe(searchTerm => {
-      this.searchTerm = searchTerm;
+    this.searchSubject.pipe(debounceTime(300), distinctUntilChanged()).subscribe(term => {
+      this.searchTerm = term;
       this.loadEmployees();
     });
   }
@@ -148,157 +93,116 @@ export class EmployeeComponent {
     this.loadEmployees();
   }
 
-  onSearchChange(event: Event): void {
-    const searchTerm = (event.target as HTMLInputElement).value;
-    this.searchSubject.next(searchTerm);
+  private getClientId(): string {
+    try {
+      const raw = sessionStorage.getItem('user');
+      if (!raw) return '';
+      const parsed = JSON.parse(raw);
+      return String(parsed?._id ?? parsed);
+    } catch { return ''; }
   }
 
   private currencyFormatter(params: ValueFormatterParams): string {
-    if (!params.value) return '₹0';
-    return `₹${params.value.toLocaleString('en-IN')}`;
+    const v = Number(params.value ?? 0);
+    return `₹${v.toLocaleString('en-IN')}`;
   }
 
-  onGridReady(params: GridReadyEvent) {
-    this.gridApi = params.api;
+  onGridReady(params: GridReadyEvent): void { this.gridApi = params.api; }
+
+  onSearchChange(event: Event): void {
+    this.searchSubject.next((event.target as HTMLInputElement).value);
   }
 
   loadEmployees(): void {
     this.loading = true;
     this.employeeService.getEmployees().subscribe({
       next: (data) => {
-        const normalizedData = data.map((employee: Employee & { debtAmount?: number; pendingSalary?: number }) => {
-          const salary = Number((employee as any).salary) || 0;
-          const debtAmount = Number((employee as any).debtAmount) || 0;
-          return {
-            ...(employee as any),
-            salary,
-            debtAmount
-          };
-        });
-
-        let filteredData = normalizedData;
+        let filtered = (data || []).map((e: any) => ({
+          ...e,
+          salary: Number(e.salary) || 0,
+          debtAmount: Number(e.debtAmount) || 0,
+          advanceAmount: Number(e.advanceAmount) || 0
+        }));
 
         if (this.searchTerm) {
-          const searchLower = this.searchTerm.toLowerCase();
-          filteredData = normalizedData.filter((employee: Employee) =>
-            employee.name.toLowerCase().includes(searchLower) ||
-            employee.phoneNumber.includes(this.searchTerm)
+          const s = this.searchTerm.toLowerCase();
+          filtered = filtered.filter((e: Employee) =>
+            (e.name || '').toLowerCase().includes(s) ||
+            (e.phoneNumber || '').includes(this.searchTerm)
           );
         }
 
-        this.rowData = filteredData;
-        if (this.gridApi) {
-          this.gridApi.setGridOption('rowData', filteredData);
-        }
+        this.rowData = filtered;
+        if (this.gridApi) this.gridApi.setGridOption('rowData', filtered);
         this.loading = false;
       },
       error: (error) => {
         console.error('Error loading employees:', error);
-        this.snackBar.open('Error loading employees', 'Close', {
-          duration: 3000,
-          panelClass: ['error-snackbar']
-        });
+        this.snackBar.open('Error loading employees', 'Close', { duration: 3000, panelClass: ['error-snackbar'] });
         this.loading = false;
       }
     });
   }
 
   onAddClick(): void {
-    const dialogRef = this.dialog.open(EmployeeFormDialogComponent,
-
-      {
-        autoFocus: false,
-        restoreFocus: false,
-        width: '700px',
-        height: '80vh',
-        data: { isEdit: false }
-      });
+    const dialogRef = this.dialog.open(EmployeeFormDialogComponent, {
+      autoFocus: false, restoreFocus: false,
+      width: '700px', height: '80vh',
+      data: { isEdit: false }
+    });
 
     dialogRef.afterClosed().subscribe(result => {
-      if (result) {
-        this.employeeService.createEmployee({
-          ...result,
-          clientId: this.clientId
-        }).subscribe({
-          next: () => {
-            this.snackBar.open('Employee added successfully', 'Close', { duration: 3000 });
-            this.loadEmployees();
-          },
-          error: (error) => {
-            console.error('Error adding employee:', error);
-            this.snackBar.open(error?.error?.message, 'Close', {
-              duration: 3000,
-              panelClass: ['error-snackbar']
-            });
-          }
-        });
-      }
+      if (!result) return;
+      this.employeeService.createEmployee({ ...result, clientId: this.getClientId() }).subscribe({
+        next: () => {
+          this.snackBar.open('Employee added successfully', 'Close', { duration: 3000, panelClass: ['success-snackbar'] });
+          this.loadEmployees();
+        },
+        error: (error) => {
+          this.snackBar.open(error?.error?.message || 'Error adding employee', 'Close', { duration: 3000, panelClass: ['error-snackbar'] });
+        }
+      });
     });
   }
 
   onEditClick(id: string): void {
-    const employee = this.rowData.find(item => item._id === id);
-    if (!employee) {
-      this.snackBar.open('Employee not found', 'Close', {
-        duration: 3000,
-        panelClass: ['error-snackbar']
-      });
-      return;
-    }
+    const employee = this.rowData.find(e => e._id === id);
+    if (!employee) return;
     this.zone.run(() => {
       const dialogRef = this.dialog.open(EmployeeFormDialogComponent, {
-        width: '700px',
-        height: '80vh',
-        data: {
-          isEdit: true,
-          employee: { ...employee }
-        }
+        width: '700px', height: '80vh',
+        data: { isEdit: true, employee: { ...employee } }
       });
 
       dialogRef.afterClosed().subscribe((result: any) => {
-        if (result) {
-          this.loading = true;
-          this.employeeService.updateEmployee(employee._id, result).subscribe({
-            next: () => {
-              this.snackBar.open('Employee updated successfully', 'Close', {
-                duration: 3000,
-                panelClass: ['success-snackbar']
-              });
-              this.loadEmployees();
-            },
-            error: (error) => {
-              this.snackBar.open(error?.error?.message, 'Close', {
-                duration: 3000,
-                panelClass: ['error-snackbar']
-              });
-              this.loading = false;
-            }
-          });
-        }
+        if (!result) return;
+        this.loading = true;
+        this.employeeService.updateEmployee(employee._id, result).subscribe({
+          next: () => {
+            this.snackBar.open('Employee updated successfully', 'Close', { duration: 3000, panelClass: ['success-snackbar'] });
+            this.loadEmployees();
+          },
+          error: (error) => {
+            this.snackBar.open(error?.error?.message || 'Error updating employee', 'Close', { duration: 3000, panelClass: ['error-snackbar'] });
+            this.loading = false;
+          }
+        });
       });
     });
   }
 
   onDeleteClick(id: string): void {
-    if (confirm('Are you sure you want to delete this employee? This action cannot be undone.')) {
-      this.loading = true;
-      this.employeeService.deleteEmployee(id).subscribe({
-        next: () => {
-          this.snackBar.open('Employee deleted successfully', 'Close', {
-            duration: 3000,
-            panelClass: ['success-snackbar']
-          });
-          this.loadEmployees();
-        },
-        error: (error) => {
-          console.error('Error deleting employee:', error);
-          this.snackBar.open('Error deleting employee. Please try again.', 'Close', {
-            duration: 3000,
-            panelClass: ['error-snackbar']
-          });
-          this.loading = false;
-        }
-      });
-    }
+    if (!confirm('Are you sure you want to delete this employee? This action cannot be undone.')) return;
+    this.loading = true;
+    this.employeeService.deleteEmployee(id).subscribe({
+      next: () => {
+        this.snackBar.open('Employee deleted successfully', 'Close', { duration: 3000, panelClass: ['success-snackbar'] });
+        this.loadEmployees();
+      },
+      error: (error) => {
+        this.snackBar.open(error?.error?.message || 'Error deleting employee', 'Close', { duration: 3000, panelClass: ['error-snackbar'] });
+        this.loading = false;
+      }
+    });
   }
 }

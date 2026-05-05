@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(Get-ChildItem *)",
+      "Bash(npx ng *)",
+      "Bash(grep -v \"^$\\\\|WARNING\\\\|▲\\\\|NG8\\\\|Error occurs\\\\|│\\\\|╵\\\\|╵\")",
+      "Bash(grep -v \"^$\\\\|WARNING\\\\|▲\\\\|NG8\\\\|Error occurs\\\\|│\\\\|╵\")",
+      "Bash(xargs sed *)",
+      "PowerShell(Get-ChildItem *)"
+    ]
+  }
+}

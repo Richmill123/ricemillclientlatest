@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router, RouterOutlet, NavigationEnd, RouterModule  } from '@angular/router';
+import { Router, RouterOutlet, NavigationEnd, RouterModule } from '@angular/router';
 import { filter } from 'rxjs/operators';
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatToolbarModule } from '@angular/material/toolbar';
@@ -11,21 +11,15 @@ import { MatMenuModule } from '@angular/material/menu';
 import { HeaderComponent } from './components/layout/header/header.component';
 import { SidebarComponent } from './components/layout/sidebar/sidebar.component';
 
+const SCROLLABLE_ROUTES = ['/dashboard', '/preferences'];
+
 @Component({
   selector: 'app-root',
   standalone: true,
   imports: [
-    MatIconModule,
-    CommonModule,
-    RouterOutlet,
-    MatSidenavModule,
-    MatToolbarModule,
-    MatButtonModule,
-    MatListModule,
-    MatMenuModule,
-    HeaderComponent,
-    SidebarComponent,
-    RouterModule
+    MatIconModule, CommonModule, RouterOutlet, MatSidenavModule,
+    MatToolbarModule, MatButtonModule, MatListModule, MatMenuModule,
+    HeaderComponent, SidebarComponent, RouterModule
   ],
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss']
@@ -35,19 +29,23 @@ export class AppComponent implements OnInit {
   isSidebarOpen = true;
   isMobileView = false;
   isLoginPage = false;
+  isScrollablePage = false;
 
   constructor(private router: Router) {}
 
   ngOnInit(): void {
     this.checkScreenSize();
     window.addEventListener('resize', () => this.checkScreenSize());
-    
-    // Subscribe to route changes to check if we're on the login page
+
     this.router.events.pipe(
       filter(event => event instanceof NavigationEnd)
     ).subscribe((event: any) => {
-      this.isLoginPage = event.url === '/login' || event.url === '/';
-      this.isSidebarOpen = !this.isLoginPage && !this.isMobileView;
+      const url: string = event.url.split('?')[0];
+      this.isLoginPage = url === '/login' || url === '/';
+      this.isScrollablePage = SCROLLABLE_ROUTES.some(r => url.startsWith(r));
+      if (!this.isLoginPage) {
+        this.isSidebarOpen = !this.isMobileView;
+      }
     });
   }
 
@@ -56,17 +54,12 @@ export class AppComponent implements OnInit {
   }
 
   checkScreenSize(): void {
-    this.isMobileView = window.innerWidth <= 768;
-    if (this.isMobileView) {
-      this.isSidebarOpen = false;
-    } else {
-      this.isSidebarOpen = true;
-    }
+    this.isMobileView = window.innerWidth <= 1024;
+    if (this.isMobileView) this.isSidebarOpen = false;
+    else this.isSidebarOpen = true;
   }
 
   onSidebarNavigate(): void {
-    if (this.isMobileView) {
-      this.isSidebarOpen = false;
-    }
+    if (this.isMobileView) this.isSidebarOpen = false;
   }
 }

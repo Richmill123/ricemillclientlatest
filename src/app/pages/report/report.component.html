@@ -1,82 +1,68 @@
-<div class="report-container">
-
-  <div class="header">
+<div class="page-wrap">
+  <div class="page-header">
     <h2 class="page-title">Reports</h2>
   </div>
 
-  <mat-card class="search-card">
-    <mat-card-content>
-      <form class="search-form" (ngSubmit)="onSearch()">
+  <!-- Filters -->
+  <div class="report-filters">
+    <mat-form-field appearance="outline">
+      <mat-label>Report Type</mat-label>
+      <mat-select [(ngModel)]="selectedType" name="reportType" required>
+        <mat-option *ngFor="let type of reportTypes" [value]="type">{{ type }}</mat-option>
+      </mat-select>
+      <mat-icon matSuffix>category</mat-icon>
+    </mat-form-field>
 
-        <mat-form-field appearance="outline">
-          <mat-label>Report Type</mat-label>
-          <mat-select [(ngModel)]="selectedType" name="reportType" required>
-            <mat-option *ngFor="let type of reportTypes" [value]="type">
-              {{ type }}
-            </mat-option>
-          </mat-select>
-        </mat-form-field>
+    <mat-form-field appearance="outline">
+      <mat-label>Start Date</mat-label>
+      <input matInput [matDatepicker]="startPicker" [(ngModel)]="startDate" name="startDate" required>
+      <mat-datepicker-toggle matSuffix [for]="startPicker"></mat-datepicker-toggle>
+      <mat-datepicker #startPicker></mat-datepicker>
+    </mat-form-field>
 
-        <mat-form-field appearance="outline">
-          <mat-label>Start Date</mat-label>
-          <input matInput [matDatepicker]="startPicker"
-                 [(ngModel)]="startDate"
-                 name="startDate"
-                 required>
-          <mat-datepicker-toggle matSuffix [for]="startPicker"></mat-datepicker-toggle>
-          <mat-datepicker #startPicker></mat-datepicker>
-        </mat-form-field>
+    <mat-form-field appearance="outline">
+      <mat-label>End Date</mat-label>
+      <input matInput [matDatepicker]="endPicker" [(ngModel)]="endDate" name="endDate" required>
+      <mat-datepicker-toggle matSuffix [for]="endPicker"></mat-datepicker-toggle>
+      <mat-datepicker #endPicker></mat-datepicker>
+    </mat-form-field>
 
-        <mat-form-field appearance="outline">
-          <mat-label>End Date</mat-label>
-          <input matInput [matDatepicker]="endPicker"
-                 [(ngModel)]="endDate"
-                 name="endDate"
-                 required>
-          <mat-datepicker-toggle matSuffix [for]="endPicker"></mat-datepicker-toggle>
-          <mat-datepicker #endPicker></mat-datepicker>
-        </mat-form-field>
-
-        <button mat-raised-button color="primary" class="search-btn" type="submit">
-          Search
-        </button>
-
-      </form>
-    </mat-card-content>
-  </mat-card>
-
-  <div class="action-buttons" *ngIf="rowData.length">
-    <button mat-raised-button color="primary" (click)="exportToPDF()">
-      <mat-icon>picture_as_pdf</mat-icon>
-      Export PDF
+    <button mat-raised-button color="primary" (click)="onSearch()">
+      <mat-icon>search</mat-icon> Search
     </button>
 
-    <button mat-raised-button color="accent" (click)="exportToCSV()">
-      <mat-icon>table_view</mat-icon>
-      Export CSV
+    <button mat-stroked-button color="primary" (click)="exportToPDF()" *ngIf="rowData.length">
+      <mat-icon>picture_as_pdf</mat-icon> PDF
+    </button>
+
+    <button mat-stroked-button color="accent" (click)="exportToCSV()" *ngIf="rowData.length">
+      <mat-icon>table_view</mat-icon> CSV
     </button>
   </div>
 
-  <mat-card class="grid-card" *ngIf="isSearchClicked">
-    <div class="ag-theme-alpine grid-container"  *ngIf="rowData.length != 0" >
+  <!-- Grid -->
+  <ng-container *ngIf="isSearchClicked">
+    <div *ngIf="rowData.length === 0" class="empty-state">
+      <mat-icon>inbox</mat-icon>
+      <p>No records found for the selected criteria.</p>
+    </div>
+
+    <div *ngIf="rowData.length > 0" class="grid-wrapper ag-theme-alpine">
       <ag-grid-angular
         #agGrid
+        style="width:100%;height:100%"
         [rowData]="rowData"
         [columnDefs]="columnDefs"
         [defaultColDef]="defaultColDef"
         [gridOptions]="gridOptions"
-        [rowHeight]="40"
-        (gridReady)="onGridReady($event)"
-        style="width: 100%; height: 50vh;"
-        >
+        [rowHeight]="44"
+        (gridReady)="onGridReady($event)">
       </ag-grid-angular>
     </div>
-<div class="no-data-message" *ngIf="rowData.length == 0">
-  <div class="message-content">
-    <mat-icon>info</mat-icon>
-    <span>No records found for the selected criteria.</span>
-  </div>
-</div>
-  </mat-card>
+  </ng-container>
 
+  <div *ngIf="!isSearchClicked" class="empty-state">
+    <mat-icon>bar_chart</mat-icon>
+    <p>Select a report type and date range, then click Search.</p>
+  </div>
 </div>

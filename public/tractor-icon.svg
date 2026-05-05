@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <!-- Light green background -->
+  <rect width="64" height="64" rx="12" fill="#90EE90"/>
+  <!-- Tractor body -->
+  <rect x="20" y="24" width="22" height="14" rx="2" fill="#2d6a2d"/>
+  <!-- Tractor cabin -->
+  <rect x="30" y="16" width="12" height="12" rx="2" fill="#2d6a2d"/>
+  <!-- Exhaust pipe -->
+  <rect x="39" y="10" width="3" height="8" rx="1" fill="#1a4a1a"/>
+  <!-- Large rear wheel -->
+  <circle cx="24" cy="40" r="10" fill="#1a4a1a"/>
+  <circle cx="24" cy="40" r="6" fill="#4a7a4a"/>
+  <circle cx="24" cy="40" r="2" fill="#1a4a1a"/>
+  <!-- Small front wheel -->
+  <circle cx="44" cy="41" r="6" fill="#1a4a1a"/>
+  <circle cx="44" cy="41" r="3.5" fill="#4a7a4a"/>
+  <circle cx="44" cy="41" r="1.5" fill="#1a4a1a"/>
+  <!-- Engine hood -->
+  <rect x="16" y="26" width="10" height="8" rx="2" fill="#3a7a3a"/>
+  <!-- Window -->
+  <rect x="31" y="17" width="10" height="8" rx="1" fill="#a8d8a8"/>
+</svg>

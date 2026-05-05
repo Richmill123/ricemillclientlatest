@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { environment } from '../../environments/environment';
 
 export type PaymentMethod = 'Cash' | 'Bank Transfer' | 'UPI' | 'Cheque' | 'Other';
 
@@ -22,13 +23,9 @@ export interface Expense {
 export type ExpenseCreateRequest = Omit<Expense, '_id' | 'createdAt' | 'updatedAt'>;
 export type ExpenseUpdateRequest = Partial<Omit<Expense, '_id' | 'createdAt' | 'updatedAt'>> & { clientId: string };
 
-@Injectable({
-  providedIn: 'root'
-})
+@Injectable({ providedIn: 'root' })
 export class ExpenseService {
-  private apiUrl = 'https://richmill-git-main-richmill123s-projects.vercel.app/api';
-   // private apiUrl = 'http://192.168.1.2:5000/api';
-
+  private readonly apiUrl = environment.apiUrl;
 
   constructor(private http: HttpClient) {}
 
@@ -38,9 +35,7 @@ export class ExpenseService {
       if (!raw) return '';
       const parsed = JSON.parse(raw);
       return String(parsed?._id ?? parsed);
-    } catch {
-      return '';
-    }
+    } catch { return ''; }
   }
 
   getExpenses(): Observable<Expense[]> {

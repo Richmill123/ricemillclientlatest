@@ -1,0 +1,93 @@
+<h2 mat-dialog-title class="dialog-title">
+  <mat-icon>receipt</mat-icon>
+  {{ data.isEdit ? 'Edit Invoice' : 'New Invoice' }}
+  <span *ngIf="existingInvoiceNo" class="invoice-badge">{{ existingInvoiceNo }}</span>
+  <span *ngIf="!data.isEdit" class="invoice-badge auto-badge">Auto-assigned</span>
+</h2>
+
+<mat-dialog-content class="dialog-content">
+  <form [formGroup]="form">
+    <div class="form-row">
+      <mat-form-field appearance="outline" class="field-lg">
+        <mat-label>Customer Name</mat-label>
+        <input matInput formControlName="customerName" placeholder="Enter customer name">
+        <mat-icon matSuffix>person</mat-icon>
+        <mat-error *ngIf="form.get('customerName')?.hasError('required')">Customer name is required</mat-error>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Invoice Date</mat-label>
+        <input matInput type="date" formControlName="date">
+        <mat-error *ngIf="form.get('date')?.hasError('required')">Date is required</mat-error>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Status</mat-label>
+        <mat-select formControlName="status">
+          <mat-option *ngFor="let s of statuses" [value]="s">{{ s | titlecase }}</mat-option>
+        </mat-select>
+      </mat-form-field>
+    </div>
+
+    <mat-divider class="section-divider"></mat-divider>
+
+    <div class="items-header">
+      <h3>Bill Items</h3>
+      <button mat-stroked-button color="primary" type="button" (click)="addItem()">
+        <mat-icon>add</mat-icon> Add Item
+      </button>
+    </div>
+
+    <div formArrayName="items" class="items-list">
+      <div *ngFor="let item of items.controls; let i = index" [formGroupName]="i" class="item-row">
+        <span class="item-index">{{ i + 1 }}</span>
+
+        <mat-form-field appearance="outline" class="field-desc">
+          <mat-label>Description</mat-label>
+          <input matInput formControlName="description" placeholder="Service / item description">
+          <mat-error *ngIf="item.get('description')?.hasError('required')">Required</mat-error>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="field-num">
+          <mat-label>Qty</mat-label>
+          <input matInput type="number" formControlName="quantity" min="0.01" (input)="onItemChange(i)">
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="field-num">
+          <mat-label>Rate (₹)</mat-label>
+          <input matInput type="number" formControlName="rate" min="0" (input)="onItemChange(i)">
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="field-num">
+          <mat-label>Amount (₹)</mat-label>
+          <input matInput formControlName="amount" readonly>
+        </mat-form-field>
+
+        <button mat-icon-button color="warn" type="button" (click)="removeItem(i)" [disabled]="items.length === 1" class="remove-btn">
+          <mat-icon>delete_outline</mat-icon>
+        </button>
+      </div>
+    </div>
+
+    <div class="total-row">
+      <span class="total-label">Total Amount:</span>
+      <span class="total-value">₹{{ totalAmount | number:'1.2-2' }}</span>
+    </div>
+
+    <mat-form-field appearance="outline" class="w-full notes-field">
+      <mat-label>Notes (optional)</mat-label>
+      <textarea matInput formControlName="notes" rows="2" placeholder="Additional notes or terms"></textarea>
+    </mat-form-field>
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions class="dialog-actions">
+  <button mat-stroked-button type="button" (click)="onCancel()">
+    <mat-icon>close</mat-icon> Cancel
+  </button>
+  <button mat-raised-button color="primary" type="button" (click)="onSave()" [disabled]="loading">
+    <mat-spinner diameter="18" *ngIf="loading"></mat-spinner>
+    <mat-icon *ngIf="!loading">save</mat-icon>
+    {{ loading ? 'Saving...' : (data.isEdit ? 'Update' : 'Save') }}
+  </button>
+</mat-dialog-actions>
