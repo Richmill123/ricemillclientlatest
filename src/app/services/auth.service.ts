@@ -39,7 +39,6 @@ const KEYS = {
   ACCESS_TOKEN:  'auth_token',
   REFRESH_TOKEN: 'refresh_token',
   USER:          'user',
-  USER_TYPE:     'user_type',
 } as const;
 
 @Injectable({ providedIn: 'root' })
@@ -75,10 +74,6 @@ export class AuthService {
     return this.getUser()?._id ?? '';
   }
 
-  getUserType(): string {
-    return sessionStorage.getItem(KEYS.USER_TYPE) ?? 'merchant';
-  }
-
   isAuthenticated(): boolean {
     const token = this.getAccessToken();
     return !!token && !this.isTokenExpired(token);
@@ -90,10 +85,9 @@ export class AuthService {
 
   // ── Session management ──────────────────────────────────────────────────────
 
-  saveSession(res: LoginResponse, userType: string): void {
+  saveSession(res: LoginResponse): void {
     sessionStorage.setItem(KEYS.ACCESS_TOKEN,  res.accessToken);
     sessionStorage.setItem(KEYS.REFRESH_TOKEN, res.refreshToken);
-    sessionStorage.setItem(KEYS.USER_TYPE, userType);
 
     const { accessToken, refreshToken, expiresIn, ...userData } = res;
     sessionStorage.setItem(KEYS.USER, JSON.stringify(userData));
@@ -111,7 +105,6 @@ export class AuthService {
     sessionStorage.removeItem(KEYS.ACCESS_TOKEN);
     sessionStorage.removeItem(KEYS.REFRESH_TOKEN);
     sessionStorage.removeItem(KEYS.USER);
-    sessionStorage.removeItem(KEYS.USER_TYPE);
   }
 
   // ── HTTP calls ──────────────────────────────────────────────────────────────

@@ -8,21 +8,6 @@
 
     <form (ngSubmit)="onSubmit(loginForm)" #loginForm="ngForm" class="login-form">
 
-      <!-- User Type Selector -->
-      <div class="user-type-selector">
-        <label class="type-label">Account Type</label>
-        <div class="type-buttons">
-          <button *ngFor="let t of userTypes"
-                  type="button"
-                  class="type-btn"
-                  [class.active]="userType === t.value"
-                  (click)="userType = t.value">
-            <mat-icon>{{ t.icon }}</mat-icon>
-            <span>{{ t.label }}</span>
-          </button>
-        </div>
-      </div>
-
       <mat-form-field appearance="outline">
         <mat-label>Username</mat-label>
         <input matInput

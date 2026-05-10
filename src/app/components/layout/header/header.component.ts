@@ -47,10 +47,6 @@ export class HeaderComponent implements OnInit {
     return u?.name || u?.username || 'User';
   }
 
-  get userType(): string {
-    return this.auth.getUserType();
-  }
-
   get userInitial(): string {
     return (this.username[0] || 'U').toUpperCase();
   }

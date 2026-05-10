@@ -7,15 +7,12 @@ import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatSelectModule } from '@angular/material/select';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { ToastrService } from 'ngx-toastr';
 import { Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AuthService } from '../../../services/auth.service';
 import { ErrorDialogComponent } from '../../../shared/components/error-dialog/error-dialog.component';
-
-export type UserType = 'merchant' | 'hybrid' | 'custom';
 
 @Component({
   selector: 'app-login',
@@ -29,7 +26,6 @@ export type UserType = 'merchant' | 'hybrid' | 'custom';
     MatButtonModule,
     MatIconModule,
     MatProgressSpinnerModule,
-    MatSelectModule,
     MatDialogModule,
     ErrorDialogComponent
   ],
@@ -39,15 +35,8 @@ export type UserType = 'merchant' | 'hybrid' | 'custom';
 export class LoginComponent implements OnInit {
   username = '';
   password = '';
-  userType: UserType = 'merchant';
   hidePassword = true;
   isLoading = false;
-
-  readonly userTypes: { value: UserType; label: string; icon: string }[] = [
-    { value: 'merchant', label: 'Merchant', icon: 'storefront' },
-    { value: 'hybrid',   label: 'Hybrid',   icon: 'swap_horiz'  },
-    { value: 'custom',   label: 'Custom',   icon: 'tune'        }
-  ];
 
   constructor(
     private auth: AuthService,
@@ -73,7 +62,7 @@ export class LoginComponent implements OnInit {
     this.auth.login({ username: this.username, password: this.password }).subscribe({
       next: (response) => {
         this.isLoading = false;
-        this.auth.saveSession(response, this.userType);
+        this.auth.saveSession(response);
         this.toastr.success('Login successful!', 'Success', {
           timeOut: 3000,
           positionClass: 'toast-top-right',
