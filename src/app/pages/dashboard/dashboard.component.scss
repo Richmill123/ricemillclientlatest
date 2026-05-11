@@ -11,7 +11,7 @@
 
  .kpi-grid {
    display: grid;
-   grid-template-columns: repeat(4, minmax(0, 1fr));
+   grid-template-columns: repeat(5, minmax(0, 1fr));
    gap: 14px;
    margin-bottom: 14px;
  }
@@ -59,8 +59,9 @@
  .kpi-sub {
    margin-top: 6px;
    display: flex;
+   flex-wrap: wrap;
    justify-content: space-between;
-   gap: 10px;
+   gap: 4px 10px;
    font-size: 12px;
    color: #64748b;
  }
@@ -78,6 +79,11 @@
  .kpi-bags .kpi-icon {
    background: rgba(99, 102, 241, 0.12);
    color: #4f46e5;
+ }
+
+ .kpi-pending .kpi-icon {
+   background: rgba(245, 158, 11, 0.12);
+   color: #d97706;
  }
 
  .kpi-profit-pos {
@@ -293,6 +299,12 @@
 
  .row .cap {
    text-transform: capitalize;
+ }
+
+ @media (max-width: 1300px) {
+   .kpi-grid {
+     grid-template-columns: repeat(3, minmax(0, 1fr));
+   }
  }
 
  @media (max-width: 1100px) {

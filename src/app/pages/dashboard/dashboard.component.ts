@@ -4,7 +4,9 @@ import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { forkJoin } from 'rxjs';
 import { DashboardResponse, DashboardService } from '../../services/dashboard.service';
+import { Sale, SalesService } from '../../services/sales.service';
 import { PreferenceService } from '../../services/preference.service';
 
 @Component({
@@ -23,6 +25,7 @@ export class DashboardComponent {
 
   loading = false;
   data?: DashboardResponse;
+  pendingSalesAmount = 0;
 
   summaryItems: Array<{ key: 'totalOrder' | 'paddyTaken' | 'newOrder' | 'output'; label: string }> = [
     { key: 'totalOrder', label: 'Previous Order' },
@@ -33,6 +36,7 @@ export class DashboardComponent {
 
   constructor(
     private dashboardService: DashboardService,
+    private salesService: SalesService,
     private snackBar: MatSnackBar,
     private prefService: PreferenceService,
   ) {}
@@ -76,9 +80,14 @@ export class DashboardComponent {
 
   loadDashboard(): void {
     this.loading = true;
-    this.dashboardService.getDashboard().subscribe({
-      next: (d) => {
-        this.data = d;
+    forkJoin({
+      dashboard: this.dashboardService.getDashboard(),
+      sales: this.salesService.getSales()
+    }).subscribe({
+      next: ({ dashboard, sales }) => {
+        this.pendingSalesAmount = (sales || [])
+          .reduce((sum: number, s: Sale) => sum + (Number(s.mydebt) || 0), 0);
+        this.data = dashboard;
         this.loading = false;
       },
       error: (error) => {

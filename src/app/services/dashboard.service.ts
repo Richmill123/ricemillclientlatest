@@ -13,15 +13,21 @@ export interface AmountQuantity {
 export interface RevenueSummary {
   orders: number;
   sales: number;
-  billing: number;
   total: number;
 }
 
 export interface ExpenseSummary {
   wages: number;
   salary: number;
-  other: number;
+  expense: number;
   purchase: number;
+  total: number;
+}
+
+export interface PendingSummary {
+  orders: number;
+  purchases: number;
+  sales: number;
   total: number;
 }
 
@@ -54,6 +60,7 @@ export interface DashboardMonth {
 export interface DashboardResponse {
   revenue: RevenueSummary;
   expense: ExpenseSummary;
+  pending: PendingSummary;
   profit: number;
   todaySummary: {
     totalOrder: number;

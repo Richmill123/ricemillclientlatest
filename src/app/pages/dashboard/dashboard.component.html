@@ -25,7 +25,6 @@
           <div class="kpi-sub">
             <span>Orders: {{ formatCurrency(d.revenue.orders) }}</span>
             <span>Sales: {{ formatCurrency(d.revenue.sales) }}</span>
-            <span>Billing: {{ formatCurrency(d.revenue.billing) }}</span>
           </div>
         </mat-card>
 
@@ -39,6 +38,7 @@
             <span>Wages: {{ formatCurrency(d.expense.wages) }}</span>
             <span>Salary: {{ formatCurrency(d.expense.salary) }}</span>
             <span>Purchase: {{ formatCurrency(d.expense.purchase) }}</span>
+            <span>Expense: {{ formatCurrency(d.expense.expense) }}</span>
           </div>
         </mat-card>
 
@@ -50,6 +50,19 @@
           <div class="kpi-value">{{ formatCurrency(d.profit) }}</div>
           <div class="kpi-sub">
             <span>Net: {{ d.profit >= 0 ? 'Positive' : 'Loss' }}</span>
+          </div>
+        </mat-card>
+
+        <mat-card class="kpi-card kpi-pending">
+          <div class="kpi-top">
+            <div class="kpi-title">Pending Amount</div>
+            <mat-icon class="kpi-icon">pending_actions</mat-icon>
+          </div>
+          <div class="kpi-value">{{ formatCurrency(d.pending.orders + d.pending.purchases + pendingSalesAmount) }}</div>
+          <div class="kpi-sub">
+            <span>Orders: {{ formatCurrency(d.pending.orders) }}</span>
+            <span>Purchases: {{ formatCurrency(d.pending.purchases) }}</span>
+            <span>Sales: {{ formatCurrency(pendingSalesAmount) }}</span>
           </div>
         </mat-card>
 
