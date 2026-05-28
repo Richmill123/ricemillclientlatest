@@ -14,6 +14,7 @@ export interface Order {
   totalAmount: number;
   advanceAmount: number;
   typeOfPaddy: string;
+  splittingincome?: number;
   status: string;
   createdAt: string;
   updatedAt: string;

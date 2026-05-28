@@ -90,12 +90,12 @@ export class SalesComponent {
         const editBtn = document.createElement('button');
         editBtn.className = 'mat-icon-button gridAction-edit';
         editBtn.innerHTML = 'edit';
-        editBtn.addEventListener('click', (e) => { e.stopPropagation(); this.onEditClick(params.data?._id); });
+        editBtn.addEventListener('click', (e) => { e.stopPropagation(); this.zone.run(() => this.onEditClick(params.data?._id)); });
 
         const deleteBtn = document.createElement('button');
         deleteBtn.className = 'mat-icon-button gridAction-delete';
         deleteBtn.innerHTML = 'delete';
-        deleteBtn.addEventListener('click', (e) => { e.stopPropagation(); this.onDeleteClick(params.data?._id); });
+        deleteBtn.addEventListener('click', (e) => { e.stopPropagation(); this.zone.run(() => this.onDeleteClick(params.data?._id)); });
 
         div.appendChild(editBtn);
         div.appendChild(deleteBtn);
@@ -221,32 +221,30 @@ export class SalesComponent {
       this.snackBar.open('Sale not found', 'Close', { duration: 3000, panelClass: ['error-snackbar'] });
       return;
     }
-    this.zone.run(() => {
-      const dialogRef = this.dialog.open(SalesFormDialogComponent, {
-        width: '900px',
-        maxWidth: '95vw',
-        disableClose: true,
-        autoFocus: false,
-        data: { isEdit: true, sale: { ...sale }, itemTypes: this.prefService.getOutputTypes() }
-      });
+    const dialogRef = this.dialog.open(SalesFormDialogComponent, {
+      width: '900px',
+      maxWidth: '95vw',
+      disableClose: true,
+      autoFocus: false,
+      data: { isEdit: true, sale: { ...sale }, itemTypes: this.prefService.getOutputTypes() }
+    });
 
-      dialogRef.afterClosed().subscribe((result?: SalesDialogResult) => {
-        if (!result) return;
-        this.loading = true;
-        this.salesService.updateSale(id, {
-          ...result,
-          clientId: this.clientId
-        }).subscribe({
-          next: () => {
-            this.snackBar.open('Sale updated successfully', 'Close', { duration: 3000, panelClass: ['success-snackbar'] });
-            this.loadSales();
-          },
-          error: (error) => {
-            console.error('Error updating sale:', error);
-            this.snackBar.open(error?.error?.message, 'Close', { duration: 3000, panelClass: ['error-snackbar'] });
-            this.loading = false;
-          }
-        });
+    dialogRef.afterClosed().subscribe((result?: SalesDialogResult) => {
+      if (!result) return;
+      this.loading = true;
+      this.salesService.updateSale(id, {
+        ...result,
+        clientId: this.clientId
+      }).subscribe({
+        next: () => {
+          this.snackBar.open('Sale updated successfully', 'Close', { duration: 3000, panelClass: ['success-snackbar'] });
+          this.loadSales();
+        },
+        error: (error) => {
+          console.error('Error updating sale:', error);
+          this.snackBar.open(error?.error?.message, 'Close', { duration: 3000, panelClass: ['error-snackbar'] });
+          this.loading = false;
+        }
       });
     });
   }

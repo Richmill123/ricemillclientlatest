@@ -20,6 +20,13 @@
       </div>
 
       <button mat-icon-button
+              class="subscription-btn"
+              (click)="goToSubscription()"
+              matTooltip="Subscription & Billing">
+        <mat-icon>payment</mat-icon>
+      </button>
+
+      <button mat-icon-button
               class="settings-btn"
               (click)="goToPreferences()"
               matTooltip="Preferences & Settings">

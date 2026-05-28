@@ -68,9 +68,6 @@ export class SalesFormDialogComponent implements OnInit {
       paymentStatus: ['Pending' as PaymentStatus, Validators.required],
       paymentMethod: ['Cash' as PaymentMethod, Validators.required]
     });
-    this.dialogRef.afterOpened().subscribe(() => {
-        this.ngOnInit();
-    });
   }
 
   ngOnInit(): void {
@@ -169,14 +166,25 @@ export class SalesFormDialogComponent implements OnInit {
       } as SaleItem;
     });
 
+    const totalAmount = Number(raw.totalAmount ?? 0);
+    const paymentStatus = raw.paymentStatus as PaymentStatus;
+    let mydebt: number;
+    if (paymentStatus === 'Paid') {
+      mydebt = 0;
+    } else if (paymentStatus === 'Pending') {
+      mydebt = totalAmount;
+    } else {
+      mydebt = Number(raw.mydebt ?? 0);
+    }
+
     const result: SalesDialogResult = {
       name: String(raw.name).trim(),
       phoneNumber: String(raw.phoneNumber).trim(),
       address: String(raw.address).trim(),
       items,
-      totalAmount: Number(raw.totalAmount ?? 0),
-      mydebt: Number(raw.mydebt ?? 0),
-      paymentStatus: raw.paymentStatus as PaymentStatus,
+      totalAmount,
+      mydebt,
+      paymentStatus,
       paymentMethod: raw.paymentMethod as PaymentMethod
     };
 

@@ -10,9 +10,10 @@ import { ReportComponent }     from './pages/report/report.component';
 import { LoginComponent }      from './pages/auth/login/login.component';
 import { IncomeComponent }     from './pages/income/income.component';
 import { PurchaseComponent }   from './pages/purchase/purchase.component';
-import { BillingComponent }    from './pages/billing/billing.component';
-import { PreferenceComponent } from './pages/preference/preference.component';
-import { authGuard }           from './guards/auth.guard';
+import { BillingComponent }       from './pages/billing/billing.component';
+import { PreferenceComponent }    from './pages/preference/preference.component';
+import { SubscriptionComponent }  from './pages/subscription/subscription.component';
+import { authGuard }              from './guards/auth.guard';
 
 const guarded = { canActivate: [authGuard] };
 
@@ -29,7 +30,8 @@ export const routes: Routes = [
   { path: 'wages',      component: WagesComponent,      title: 'Wages',           ...guarded },
   { path: 'income',     component: IncomeComponent,     title: 'Income',          ...guarded },
   { path: 'purchases',  component: PurchaseComponent,   title: 'Purchases',       ...guarded },
-  { path: 'billing',    component: BillingComponent,    title: 'Billing',         ...guarded },
-  { path: 'preferences',component: PreferenceComponent, title: 'Preferences',     ...guarded },
+  { path: 'billing',      component: BillingComponent,      title: 'Billing',         ...guarded },
+  { path: 'subscription', component: SubscriptionComponent, title: 'Subscription',    ...guarded },
+  { path: 'preferences',  component: PreferenceComponent,   title: 'Preferences',     ...guarded },
   { path: '**',         redirectTo: '/dashboard' }
 ];

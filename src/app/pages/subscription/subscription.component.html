@@ -1,0 +1,90 @@
+<div class="sub-page">
+  <div class="sub-header">
+    <mat-icon class="sub-header-icon">payment</mat-icon>
+    <div>
+      <h1>My Subscription</h1>
+      <p>Manage your Rice Mill Management System subscription</p>
+    </div>
+  </div>
+
+  <!-- Loading -->
+  <div *ngIf="loading" class="sub-loading">
+    <mat-spinner diameter="40"></mat-spinner>
+  </div>
+
+  <!-- Error -->
+  <div *ngIf="!loading && error" class="sub-error">
+    <mat-icon>error_outline</mat-icon>
+    <span>{{ error }}</span>
+    <button mat-stroked-button (click)="load()">Retry</button>
+  </div>
+
+  <!-- Content -->
+  <div *ngIf="!loading && !error && info" class="sub-content">
+
+    <!-- Status card -->
+    <div class="sub-card">
+      <div class="sub-card-top">
+        <div class="sub-plan-info">
+          <div class="sub-plan-name">Rice Mill Management Monthly</div>
+          <div class="sub-plan-amount">&#8377;{{ info.amount | number }}<span>/month</span></div>
+        </div>
+        <div class="sub-status-badge" [class]="'status-' + statusColor">
+          <span class="status-dot"></span>
+          {{ statusLabel }}
+        </div>
+      </div>
+
+      <mat-divider></mat-divider>
+
+      <div class="sub-meta-grid">
+        <div class="sub-meta-item">
+          <label>Next Billing</label>
+          <span>{{ nextBilling }}</span>
+        </div>
+        <div class="sub-meta-item">
+          <label>Member Since</label>
+          <span>{{ info.createdAt | date:'dd MMM yyyy' }}</span>
+        </div>
+        <div class="sub-meta-item">
+          <label>Subscription ID</label>
+          <span class="sub-id">{{ info.subscription?.razorpaySubscriptionId || '—' }}</span>
+        </div>
+        <div class="sub-meta-item">
+          <label>Account Status</label>
+          <span [class]="info.active ? 'active-text' : 'inactive-text'">
+            {{ info.active ? 'Active' : 'Inactive' }}
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="sub-actions">
+      <button mat-raised-button color="warn"
+              *ngIf="info.active && info.subscription?.status !== 'cancelled'"
+              [disabled]="cancelling"
+              (click)="cancel()">
+        <mat-icon>cancel</mat-icon>
+        <span *ngIf="!cancelling">Cancel Subscription</span>
+        <mat-spinner *ngIf="cancelling" diameter="18"></mat-spinner>
+      </button>
+
+      <button mat-raised-button color="primary"
+              *ngIf="!info.active || info.subscription?.status === 'cancelled' || info.subscription?.status === 'halted'"
+              [disabled]="reactivating"
+              (click)="reactivate()">
+        <mat-icon>refresh</mat-icon>
+        <span *ngIf="!reactivating">Reactivate Subscription</span>
+        <mat-spinner *ngIf="reactivating" diameter="18"></mat-spinner>
+      </button>
+    </div>
+
+    <!-- Info note -->
+    <div class="sub-note">
+      <mat-icon>info_outline</mat-icon>
+      <span>Payments are processed securely via Razorpay. Subscription renews automatically every month. Cancel any time.</span>
+    </div>
+
+  </div>
+</div>

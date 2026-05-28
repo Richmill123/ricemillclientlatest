@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, NgZone, OnInit, ViewChild } from '@angular/core';
 import { ColDef, GridReadyEvent, GridApi, ICellRendererParams, ModuleRegistry } from 'ag-grid-community';
 import { AgGridModule } from 'ag-grid-angular';
 import { AllCommunityModule } from 'ag-grid-community';
@@ -132,6 +132,7 @@ export class OrderComponent implements OnInit {
   constructor(
     private orderService: OrderService,
     private dialog: MatDialog,
+    private zone: NgZone,
     private snackBar: MatSnackBar,
     private prefService: PreferenceService,
   ) { }
@@ -226,7 +227,7 @@ export class OrderComponent implements OnInit {
         editBtn.innerHTML = 'edit';
         editBtn.addEventListener('click', (e) => {
           e.stopPropagation();
-          this.editOrder(params.data);
+          this.zone.run(() => this.editOrder(params.data));
         });
 
         const deleteBtn = document.createElement('button');
@@ -235,7 +236,7 @@ export class OrderComponent implements OnInit {
 
         deleteBtn.addEventListener('click', (e) => {
           e.stopPropagation();
-          this.deleteOrder(params.data);
+          this.zone.run(() => this.deleteOrder(params.data));
         });
 
         div.appendChild(editBtn);

@@ -13,6 +13,7 @@ import { debounceTime, distinctUntilChanged, Subject } from 'rxjs';
 import { Billing, BillingService } from '../../services/billing.service';
 import { BillingDialogResult, BillingFormDialogComponent } from './billing-form-dialog/billing-form-dialog.component';
 import { DEFAULT_PREFERENCE, MillPreference, PreferenceService } from '../../services/preference.service';
+import { FileDownloadService } from '../../services/file-download.service';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
@@ -82,19 +83,19 @@ export class BillingComponent implements OnInit {
         printBtn.className = 'mat-icon-button gridAction-print';
         printBtn.innerHTML = 'Print / Download';
         printBtn.title = 'Print or Download Invoice';
-        printBtn.addEventListener('click', (e) => { e.stopPropagation(); this.printBill(params.data); });
+        printBtn.addEventListener('click', (e) => { e.stopPropagation(); this.zone.run(() => this.printBill(params.data)); });
 
         const editBtn = document.createElement('button');
         editBtn.className = 'mat-icon-button gridAction-edit';
         editBtn.style.color = '#3f51b5';
         editBtn.innerHTML = 'edit';
-        editBtn.addEventListener('click', (e) => { e.stopPropagation(); this.onEditClick(params.data?._id); });
+        editBtn.addEventListener('click', (e) => { e.stopPropagation(); this.zone.run(() => this.onEditClick(params.data?._id)); });
 
         const deleteBtn = document.createElement('button');
         deleteBtn.className = 'mat-icon-button gridAction-delete';
         deleteBtn.style.color = '#f44336';
         deleteBtn.innerHTML = 'delete';
-        deleteBtn.addEventListener('click', (e) => { e.stopPropagation(); this.onDeleteClick(params.data?._id, params.data?.customerName); });
+        deleteBtn.addEventListener('click', (e) => { e.stopPropagation(); this.zone.run(() => this.onDeleteClick(params.data?._id, params.data?.customerName)); });
 
         div.appendChild(printBtn);
         div.appendChild(editBtn);
@@ -112,6 +113,7 @@ export class BillingComponent implements OnInit {
     private zone: NgZone,
     private snackBar: MatSnackBar,
     private prefService: PreferenceService,
+    private fileDownload: FileDownloadService,
   ) {
     this.searchSubject.pipe(debounceTime(300), distinctUntilChanged()).subscribe(term => {
       this.searchTerm = term;
@@ -188,17 +190,15 @@ export class BillingComponent implements OnInit {
     if (!id) return;
     const billing = this.rowData.find(b => b._id === id);
     if (!billing) return;
-    this.zone.run(() => {
-      const dialogRef = this.dialog.open(BillingFormDialogComponent, {
-        width: '820px', maxWidth: '96vw', disableClose: true, autoFocus: false,
-        data: { isEdit: true, billing: { ...billing } }
-      });
-      dialogRef.afterClosed().subscribe((result?: BillingDialogResult) => {
-        if (!result) return;
-        this.billingService.updateBilling(id, { ...result, clientId: this.clientId }).subscribe({
-          next: () => { this.snackBar.open('Bill updated successfully', 'Close', { duration: 3000, panelClass: ['success-snackbar'] }); this.loadBillings(); },
-          error: (error) => this.snackBar.open(this.getApiErrorMessage(error, 'Error updating bill'), 'Close', { duration: 3000, panelClass: ['error-snackbar'] })
-        });
+    const dialogRef = this.dialog.open(BillingFormDialogComponent, {
+      width: '820px', maxWidth: '96vw', disableClose: true, autoFocus: false,
+      data: { isEdit: true, billing: { ...billing } }
+    });
+    dialogRef.afterClosed().subscribe((result?: BillingDialogResult) => {
+      if (!result) return;
+      this.billingService.updateBilling(id, { ...result, clientId: this.clientId }).subscribe({
+        next: () => { this.snackBar.open('Bill updated successfully', 'Close', { duration: 3000, panelClass: ['success-snackbar'] }); this.loadBillings(); },
+        error: (error) => this.snackBar.open(this.getApiErrorMessage(error, 'Error updating bill'), 'Close', { duration: 3000, panelClass: ['error-snackbar'] })
       });
     });
   }
@@ -507,20 +507,30 @@ export class BillingComponent implements OnInit {
     doc.setTextColor(...GRAY);
     doc.text(`Thank you for your business — ${millName}`, pageW / 2, footerY, { align: 'center' });
 
-    // Trigger browser print dialog; fall back to download if popup is blocked
-    doc.autoPrint();
-    const pdfBlob = doc.output('blob');
-    const blobUrl = URL.createObjectURL(pdfBlob);
-    const printWin = window.open(blobUrl, '_blank');
-    if (printWin) {
-      this.snackBar.open('Opening print dialog…', 'Close', { panelClass: ['success-snackbar'] });
-      // Revoke blob URL after a short delay to free memory
-      setTimeout(() => URL.revokeObjectURL(blobUrl), 30000);
+    const filename = `Invoice_${billNo}_${(billing.customerName || 'Customer').replace(/\s+/g, '_')}.pdf`;
+    const pdfBase64 = doc.output('datauristring').replace(/^data:application\/pdf;base64,/, '');
+
+    if (this.fileDownload.isNative()) {
+      // Android APK: save to cache directory and open via native share sheet
+      this.fileDownload.savePdf(pdfBase64, filename).then(() => {
+        this.snackBar.open('PDF ready — choose app to open or share', 'Close', { duration: 3000, panelClass: ['success-snackbar'] });
+      }).catch(() => {
+        this.snackBar.open('Error saving PDF', 'Close', { duration: 3000, panelClass: ['error-snackbar'] });
+      });
     } else {
-      // Popup blocked — fall back to download
-      URL.revokeObjectURL(blobUrl);
-      doc.save(`Invoice_${billNo}_${(billing.customerName || 'Customer').replace(/\s+/g, '_')}.pdf`);
-      this.snackBar.open('Popup blocked — PDF downloaded instead', 'Close', { panelClass: ['error-snackbar'] });
+      // Web: open print dialog; fall back to direct download if popup blocked
+      doc.autoPrint();
+      const pdfBlob = doc.output('blob');
+      const blobUrl = URL.createObjectURL(pdfBlob);
+      const printWin = window.open(blobUrl, '_blank');
+      if (printWin) {
+        this.snackBar.open('Opening print dialog…', 'Close', { panelClass: ['success-snackbar'] });
+        setTimeout(() => URL.revokeObjectURL(blobUrl), 30000);
+      } else {
+        URL.revokeObjectURL(blobUrl);
+        this.fileDownload.savePdf(pdfBase64, filename);
+        this.snackBar.open('PDF downloaded', 'Close', { panelClass: ['success-snackbar'] });
+      }
     }
   }
 

@@ -2,7 +2,7 @@
 
 <mat-dialog-content class="dialog-content">
   <form [formGroup]="orderForm" (ngSubmit)="onSubmit()" class="order-form" #form="ngForm">
-    <div class="error-message" *ngIf="error" @fadeIn>
+    <div class="error-message" *ngIf="error">
       <mat-icon class="error-icon">error_outline</mat-icon>
       <span>{{ error }}</span>
     </div>
@@ -72,7 +72,7 @@
         <mat-form-field appearance="outline">
           <mat-label>Advance Amount (₹)</mat-label>
           <input matInput type="number" formControlName="advanceAmount" min="0" step="10" required>
-          <mat-error *ngIf="isFieldInvalid('advanceAmount') || orderForm.hasError('advanceExceedsTotal')">
+          <mat-error *ngIf="isFieldInvalid('advanceAmount') || (submitted && orderForm.hasError('advanceExceedsTotal'))">
             {{ getErrorMessage('advanceAmount') }}
           </mat-error>
         </mat-form-field>
@@ -98,13 +98,15 @@
           </mat-error>
         </mat-form-field>
       </div>
-<mat-form-field appearance="outline">
-        <mat-label>Created Date</mat-label>
-        <input matInput type="date" formControlName="createdAt" required />
-         <mat-error *ngIf="isFieldInvalid('createdAt')">
+      <div class="col-md-4">
+        <mat-form-field appearance="outline">
+          <mat-label>Created Date</mat-label>
+          <input matInput type="date" formControlName="createdAt" required />
+          <mat-error *ngIf="isFieldInvalid('createdAt')">
             {{ getErrorMessage('createdAt') }}
           </mat-error>
-      </mat-form-field>
+        </mat-form-field>
+      </div>
       <div class="col-12" style="width: 100% !important;">
         <mat-form-field appearance="outline" class="formTextarea">
           <mat-label>Address</mat-label>

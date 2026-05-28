@@ -22,6 +22,7 @@ import { MatCardModule } from '@angular/material/card';
 
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import { FileDownloadService } from '../../services/file-download.service';
 
 type ReportType = 'Order' | 'Wages' | 'Sales' | 'Expense' | 'Stocking' | 'Income' | 'Purchase' | 'Billing';
 
@@ -78,7 +79,7 @@ export class ReportComponent {
 
   private baseUrl = environment.apiUrl;
 
-  constructor(private http: HttpClient) {
+  constructor(private http: HttpClient, private fileDownload: FileDownloadService) {
     const user = sessionStorage.getItem('user');
     if (user) {
       const parsed = JSON.parse(user);
@@ -298,7 +299,6 @@ export class ReportComponent {
       14, 23
     );
 
-    // Build columns excluding badge-rendered ones for PDF (use plain text)
     const columns = this.columnDefs
       .filter(c => c.field && c.field !== 'actions')
       .map(c => ({ header: c.headerName as string, dataKey: c.field as string }));
@@ -318,20 +318,33 @@ export class ReportComponent {
       theme: 'striped',
       styles: { fontSize: 8, cellPadding: 3, overflow: 'linebreak' },
       headStyles: { fillColor: [31, 41, 55], textColor: [255, 255, 255] },
-      columnStyles: {
-        // Give items column extra width
-        items: { cellWidth: 80 }
-      }
+      columnStyles: { items: { cellWidth: 80 } }
     });
 
-    doc.save(`${this.selectedType}_Report_${new Date().toISOString().slice(0, 10)}.pdf`);
+    const filename = `${this.selectedType}_Report_${new Date().toISOString().slice(0, 10)}.pdf`;
+    const pdfBase64 = doc.output('datauristring').replace(/^data:application\/pdf;base64,/, '');
+
+    if (this.fileDownload.isNative()) {
+      this.fileDownload.savePdf(pdfBase64, filename).catch(err => console.error('PDF save error', err));
+    } else {
+      doc.save(filename);
+    }
   }
 
   exportToCSV(): void {
-    this.gridApi.exportDataAsCsv({
-      fileName: `${this.selectedType}_Report_${new Date().toISOString().slice(0, 10)}`,
-      processCellCallback: (params: any) => this.formatCellValue(params.column.getColId(), params.value)
-    });
+    const filename = `${this.selectedType}_Report_${new Date().toISOString().slice(0, 10)}.csv`;
+
+    if (this.fileDownload.isNative()) {
+      const csvString = this.gridApi.getDataAsCsv({
+        processCellCallback: (params: any) => this.formatCellValue(params.column.getColId(), params.value)
+      }) || '';
+      this.fileDownload.saveCsv(csvString, filename).catch(err => console.error('CSV save error', err));
+    } else {
+      this.gridApi.exportDataAsCsv({
+        fileName: `${this.selectedType}_Report_${new Date().toISOString().slice(0, 10)}`,
+        processCellCallback: (params: any) => this.formatCellValue(params.column.getColId(), params.value)
+      });
+    }
   }
 
   private formatHeader(key: string): string {

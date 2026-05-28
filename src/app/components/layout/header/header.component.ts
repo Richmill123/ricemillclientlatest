@@ -51,6 +51,10 @@ export class HeaderComponent implements OnInit {
     return (this.username[0] || 'U').toUpperCase();
   }
 
+  goToSubscription(): void {
+    this.router.navigate(['/subscription']);
+  }
+
   goToPreferences(): void {
     this.router.navigate(['/preferences']);
   }
