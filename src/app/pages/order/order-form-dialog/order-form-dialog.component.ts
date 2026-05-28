@@ -1,4 +1,4 @@
-import { Component, Inject, OnInit } from '@angular/core';
+import { Component, Inject, OnInit, ChangeDetectorRef } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, AbstractControl, ValidationErrors, FormsModule } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogRef, MatDialogModule } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -54,6 +54,7 @@ export class OrderFormDialogComponent implements OnInit {
   constructor(
     private fb: FormBuilder,
     private orderService: OrderService,
+    private cdr: ChangeDetectorRef,
     public dialogRef: MatDialogRef<OrderFormDialogComponent>,
     @Inject(MAT_DIALOG_DATA) public data: any
   ) {
@@ -88,12 +89,11 @@ export class OrderFormDialogComponent implements OnInit {
         Validators.min(0),
         Validators.pattern('^[0-9]+(\.[0-9]{1,2})?$')
       ]],
-      splittingincome: [''],
+      splittingincome: [null],
        createdAt: [today, [Validators.required]],
       status: [ORDER_STATUS.CREATED, [Validators.required]]
     }, {
-      validators: [this.advanceLessThanTotalValidator],
-      updateOn: 'blur'
+      validators: [this.advanceLessThanTotalValidator]
     });
   }
 
@@ -116,18 +116,57 @@ export class OrderFormDialogComponent implements OnInit {
   }
 
   ngOnInit() {
-    // Build status options: CREATED → each preference stage → PAID & CLOSE
     const stages: string[] = this.data?.stages ?? [
       'Initial Stocking', 'Boiling Process Completed', 'Splitting Process Completed', 'Packed & Ready'
     ];
+
+    // Each stage's name (uppercased) is its own status value — no fixed index mapping.
+    // This lets users add/remove/rename stages freely in preferences.
     this.statusOptions = [
       { value: ORDER_STATUS.CREATED, label: 'Created' },
       ...stages.map(s => ({ value: s.toUpperCase(), label: s })),
       { value: ORDER_STATUS.PAID_CLOSE, label: 'Paid & Close' },
     ];
 
+    // Build a migration map from old fixed enum values → current stage names (by original position).
+    // Handles orders created before stages became free-form.
+    const OLD_ENUM_ORDERED = [
+      ORDER_STATUS.INITIAL_STOCKING,
+      ORDER_STATUS.BOILING_PROCESS_COMPLETED,
+      ORDER_STATUS.SPLITTING_PROCESS_COMPLETED,
+      ORDER_STATUS.PACKED_READY,
+    ];
+    const oldEnumToStage: Record<string, string> = {};
+    stages.forEach((s, i) => {
+      if (i < OLD_ENUM_ORDERED.length) {
+        oldEnumToStage[OLD_ENUM_ORDERED[i]] = s.toUpperCase();
+      }
+    });
+
     if (this.isEdit && this.data?.orderData) {
       const orderData = this.data.orderData;
+
+      // Step 1: migrate really old short-form values (e.g. 'BOILING' → old long-form)
+      const SHORT_FORM_MAP: Record<string, string> = {
+        'BOILING': ORDER_STATUS.BOILING_PROCESS_COMPLETED,
+        'SPLITTING': ORDER_STATUS.SPLITTING_PROCESS_COMPLETED,
+        'PACKING': ORDER_STATUS.PACKED_READY,
+        'PACKING PROCESS COMPLETED': ORDER_STATUS.PACKED_READY,
+      };
+
+      let currentStatus: string = orderData.status ?? '';
+      if (SHORT_FORM_MAP[currentStatus]) {
+        currentStatus = SHORT_FORM_MAP[currentStatus];
+      }
+      // Step 2: migrate old long-form enum values → current stage-name values
+      if (oldEnumToStage[currentStatus]) {
+        currentStatus = oldEnumToStage[currentStatus];
+      }
+
+      if (currentStatus && !this.statusOptions.some(o => o.value === currentStatus)) {
+        this.statusOptions.push({ value: currentStatus, label: currentStatus });
+      }
+
       this.orderForm.patchValue({
         name: orderData.name,
         villageName: orderData.villageName,
@@ -137,10 +176,11 @@ export class OrderFormDialogComponent implements OnInit {
         numberOfBags: orderData.numberOfBags,
         totalAmount: orderData.totalAmount,
         advanceAmount: orderData.advanceAmount,
-        splittingincome: orderData.splittingincome,
+        splittingincome: orderData.splittingincome ?? '',
         createdAt: this.normalizeDateForInput(orderData.createdAt),
-        status: orderData.status
-      });
+        status: currentStatus
+      }, { emitEvent: true });
+      this.cdr.detectChanges();
     }
 
     Object.keys(this.orderForm.controls).forEach(key => {
@@ -155,8 +195,11 @@ export class OrderFormDialogComponent implements OnInit {
   }
 
   getErrorMessage(field: string): string {
-    const control = this.orderForm.get(field);
+    if (field === 'advanceAmount' && this.orderForm.hasError('advanceExceedsTotal')) {
+      return 'Advance cannot be greater than total amount';
+    }
 
+    const control = this.orderForm.get(field);
     if (!control || !control.errors) return '';
 
     if (control.hasError('required')) {
@@ -173,8 +216,6 @@ export class OrderFormDialogComponent implements OnInit {
       if (field === 'phoneNumber') return 'Please enter a valid 10-digit phone number';
       if (field === 'numberOfBags') return 'Please enter a whole number';
       return 'Invalid format';
-    } else if (field === 'advanceAmount' && this.orderForm.hasError('advanceExceedsTotal')) {
-      return 'Advance cannot be greater than total amount';
     }
 
     return '';
@@ -197,7 +238,9 @@ export class OrderFormDialogComponent implements OnInit {
     Object.keys(this.orderForm.controls).forEach(key => {
       const control = this.orderForm.get(key);
       control?.markAsTouched();
+      control?.updateValueAndValidity({ onlySelf: true, emitEvent: false });
     });
+    this.orderForm.updateValueAndValidity();
 
     if (this.orderForm.invalid) {
       const invalidField = Object.keys(this.orderForm.controls).find(key => this.orderForm.get(key)?.invalid);
@@ -213,9 +256,11 @@ export class OrderFormDialogComponent implements OnInit {
     this.loading = true;
     this.error = null;
 
+    const formValue = this.orderForm.value;
     const orderData = {
-      ...this.orderForm.value,
-      clientId: this.getClientId()
+      ...formValue,
+      clientId: this.getClientId(),
+      splittingincome: Number(formValue.splittingincome) || 0
     };
 
     const request = this.isEdit
