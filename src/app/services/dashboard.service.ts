@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
+import { AuthService } from './auth.service';
 
 export type DashboardItemType = 'bran' | 'husk' | 'black rice' | 'broken rice' | 'Karika' | 'other';
 
@@ -13,6 +14,7 @@ export interface AmountQuantity {
 export interface RevenueSummary {
   orders: number;
   sales: number;
+  income: number;
   total: number;
 }
 
@@ -21,13 +23,16 @@ export interface ExpenseSummary {
   salary: number;
   expense: number;
   purchase: number;
+  suspense?: number;
   total: number;
 }
 
 export interface PendingSummary {
   orders: number;
   purchases: number;
+  purchasePaid: number;
   sales: number;
+  wages: number;
   total: number;
 }
 
@@ -89,19 +94,10 @@ export interface DashboardResponse {
 export class DashboardService {
   private readonly apiUrl = environment.apiUrl;
 
-  constructor(private http: HttpClient) {}
-
-  private getClientId(): string {
-    try {
-      const raw = sessionStorage.getItem('user');
-      if (!raw) return '';
-      const parsed = JSON.parse(raw);
-      return String(parsed?._id ?? parsed);
-    } catch { return ''; }
-  }
+  constructor(private http: HttpClient, private auth: AuthService) {}
 
   getDashboard(): Observable<DashboardResponse> {
-    const clientId = this.getClientId();
+    const clientId = this.auth.getClientId();
     return this.http.get<DashboardResponse>(`${this.apiUrl}/admins/dashboard?clientId=${encodeURIComponent(clientId)}`);
   }
 }

@@ -13,6 +13,7 @@ import { PurchaseComponent }   from './pages/purchase/purchase.component';
 import { BillingComponent }       from './pages/billing/billing.component';
 import { PreferenceComponent }    from './pages/preference/preference.component';
 import { SubscriptionComponent }  from './pages/subscription/subscription.component';
+import { SuspenseComponent }      from './pages/suspense/suspense.component';
 import { authGuard }              from './guards/auth.guard';
 
 const guarded = { canActivate: [authGuard] };
@@ -33,5 +34,6 @@ export const routes: Routes = [
   { path: 'billing',      component: BillingComponent,      title: 'Billing',         ...guarded },
   { path: 'subscription', component: SubscriptionComponent, title: 'Subscription',    ...guarded },
   { path: 'preferences',  component: PreferenceComponent,   title: 'Preferences',     ...guarded },
+  { path: 'suspense',     component: SuspenseComponent,     title: 'Suspense',        ...guarded },
   { path: '**',         redirectTo: '/dashboard' }
 ];

@@ -58,6 +58,11 @@
       <span class="nav-label">Stock</span>
     </a>
 
+    <a (click)="navigateTo('suspense')" [class.active]="isActive('suspense')" class="nav-item">
+      <span class="nav-icon"><mat-icon>account_balance_wallet</mat-icon></span>
+      <span class="nav-label">Suspense</span>
+    </a>
+
     <a *ngIf="isModuleVisible('wages')" (click)="navigateTo('wages')" [class.active]="isActive('wages')" class="nav-item">
       <span class="nav-icon"><mat-icon>payments</mat-icon></span>
       <span class="nav-label">Wages</span>

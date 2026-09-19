@@ -1,0 +1,50 @@
+<h2 mat-dialog-title class="px-6 pt-4">
+  {{ data.isEdit ? 'Edit' : 'Add' }} Suspense
+</h2>
+
+<mat-dialog-content class="px-6 py-4">
+  <form [formGroup]="form" class="flex flex-col gap-4">
+    <div class="formInnerWrap grid-cols-1 md:grid-cols-2 gap-4">
+      <mat-form-field appearance="outline">
+        <mat-label>Employee Name</mat-label>
+        <input matInput formControlName="employeeName" required />
+        <mat-error *ngIf="form.get('employeeName')?.hasError('required')">Employee name is required</mat-error>
+        <mat-error *ngIf="form.get('employeeName')?.hasError('minlength')">Employee name is too short</mat-error>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Employee ID</mat-label>
+        <input matInput formControlName="employeeId" required />
+        <mat-error *ngIf="form.get('employeeId')?.hasError('required')">Employee ID is required</mat-error>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Total Debt</mat-label>
+        <input matInput type="number" formControlName="totalDebt" min="0" />
+        <mat-error *ngIf="form.get('totalDebt')?.hasError('min')">Total debt cannot be negative</mat-error>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Total Advance</mat-label>
+        <input matInput type="number" formControlName="totalAdvance" min="0" />
+        <mat-error *ngIf="form.get('totalAdvance')?.hasError('min')">Total advance cannot be negative</mat-error>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Date</mat-label>
+        <input matInput type="date" formControlName="date" required />
+        <mat-error *ngIf="form.get('date')?.hasError('required')">Date is required</mat-error>
+      </mat-form-field>
+    </div>
+
+    <mat-divider></mat-divider>
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions class="px-6 pb-4 flex justify-end gap-2">
+  <button mat-button type="button" (click)="onCancel()" [disabled]="loading">Cancel</button>
+  <button mat-raised-button color="primary" type="button" (click)="onSave()" [disabled]="form.invalid || loading">
+    <span *ngIf="!loading">{{ data.isEdit ? 'Update' : 'Save' }}</span>
+    <mat-spinner *ngIf="loading" diameter="20"></mat-spinner>
+  </button>
+</mat-dialog-actions>

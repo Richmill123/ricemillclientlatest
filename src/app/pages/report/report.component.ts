@@ -23,8 +23,9 @@ import { MatCardModule } from '@angular/material/card';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { FileDownloadService } from '../../services/file-download.service';
+import { AuthService } from '../../services/auth.service';
 
-type ReportType = 'Order' | 'Wages' | 'Sales' | 'Expense' | 'Stocking' | 'Income' | 'Purchase' | 'Billing';
+type ReportType = 'Order' | 'Wages' | 'Sales' | 'Expense' | 'Stocking' | 'Income' | 'Purchase' | 'Billing' | 'Suspense';
 
 @Component({
   selector: 'app-report',
@@ -51,7 +52,7 @@ export class ReportComponent {
   isSearchClicked = false;
   private gridApi!: GridApi;
 
-  reportTypes: ReportType[] = ['Order', 'Wages', 'Sales', 'Expense', 'Stocking', 'Income', 'Purchase', 'Billing'];
+  reportTypes: ReportType[] = ['Order', 'Wages', 'Sales', 'Expense', 'Stocking', 'Income', 'Purchase', 'Billing', 'Suspense'];
   selectedType: ReportType = 'Order';
 
   startDate: Date = new Date();
@@ -79,12 +80,8 @@ export class ReportComponent {
 
   private baseUrl = environment.apiUrl;
 
-  constructor(private http: HttpClient, private fileDownload: FileDownloadService) {
-    const user = sessionStorage.getItem('user');
-    if (user) {
-      const parsed = JSON.parse(user);
-      this.clientId = parsed._id || parsed;
-    }
+  constructor(private http: HttpClient, private fileDownload: FileDownloadService, private auth: AuthService) {
+    this.clientId = this.auth.getClientId();
   }
 
   onGridReady(params: GridReadyEvent): void {
@@ -259,6 +256,7 @@ export class ReportComponent {
       case 'Income':   apiUrl = `${this.baseUrl}/income`;    break;
       case 'Purchase': apiUrl = `${this.baseUrl}/purchases`; break;
       case 'Billing':  apiUrl = `${this.baseUrl}/billing`;   break;
+      case 'Suspense': apiUrl = `${this.baseUrl}/suspense`;  break;
     }
 
     apiUrl += `?clientId=${this.clientId}&startDate=${start}&endDate=${end}`;

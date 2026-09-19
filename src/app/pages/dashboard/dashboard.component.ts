@@ -27,6 +27,14 @@ export class DashboardComponent {
   data?: DashboardResponse;
   pendingSalesAmount = 0;
 
+  get receivablePending(): number {
+    return (this.data?.pending.orders ?? 0) + this.pendingSalesAmount;
+  }
+
+  get payablePending(): number {
+    return (this.data?.pending.purchases ?? 0) + (this.data?.pending.wages ?? 0);
+  }
+
   summaryItems: Array<{ key: 'totalOrder' | 'paddyTaken' | 'newOrder' | 'output'; label: string }> = [
     { key: 'totalOrder', label: 'Previous Order' },
     { key: 'paddyTaken', label: 'Paddy Taken' },

@@ -28,6 +28,7 @@ export const ALL_MODULES: { key: string; label: string; icon: string }[] = [
   { key: 'reports',   label: 'Reports',   icon: 'bar_chart' },
   { key: 'sales',     label: 'Sales',     icon: 'point_of_sale' },
   { key: 'stock',     label: 'Stock',     icon: 'inventory_2' },
+  { key: 'suspense',  label: 'Suspense',  icon: 'account_balance_wallet' },
   { key: 'wages',     label: 'Wages',     icon: 'payments' },
 ];
 
@@ -161,6 +162,7 @@ export class PreferenceComponent implements OnInit {
     // Module visibility: if saved list is non-empty use it, else default to all
     const saved = pref.visibleModules ?? [];
     this.visibleModules = new Set(saved.length ? saved : ALL_MODULE_KEYS);
+    this.visibleModules.add('suspense');
   }
 
   // ── Module visibility ──────────────────────────────────────────────────────
