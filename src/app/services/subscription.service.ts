@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
+import { AuthService } from './auth.service';
 
 export interface SubscriptionInfo {
   active: boolean;
@@ -26,32 +27,23 @@ export interface SubscriptionInfo {
 export class SubscriptionService {
   private readonly apiUrl = environment.apiUrl;
 
-  constructor(private http: HttpClient) {}
-
-  private getAdminId(): string {
-    try {
-      const raw = sessionStorage.getItem('user');
-      if (!raw) return '';
-      const parsed = JSON.parse(raw);
-      return String(parsed?._id ?? parsed);
-    } catch { return ''; }
-  }
+  constructor(private http: HttpClient, private auth: AuthService) {}
 
   getStatus(): Observable<SubscriptionInfo> {
-    return this.http.get<SubscriptionInfo>(`${this.apiUrl}/admins/${this.getAdminId()}/subscription`);
+    return this.http.get<SubscriptionInfo>(`${this.apiUrl}/admins/${this.auth.getAdminId()}/subscription`);
   }
 
   cancel(): Observable<{ success: boolean; message: string }> {
     return this.http.post<{ success: boolean; message: string }>(
       `${this.apiUrl}/admins/razorpay/cancel`,
-      { adminId: this.getAdminId() }
+      { adminId: this.auth.getAdminId() }
     );
   }
 
   createSubscription(): Observable<any> {
     return this.http.post<any>(
       `${this.apiUrl}/admins/razorpay/create-subscription`,
-      { adminId: this.getAdminId() }
+      { adminId: this.auth.getAdminId() }
     );
   }
 
@@ -62,7 +54,7 @@ export class SubscriptionService {
   }): Observable<{ success: boolean; message: string }> {
     return this.http.post<any>(
       `${this.apiUrl}/admins/razorpay/verify-payment`,
-      { adminId: this.getAdminId(), ...payload }
+      { adminId: this.auth.getAdminId(), ...payload }
     );
   }
 }

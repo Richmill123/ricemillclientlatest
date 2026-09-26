@@ -49,21 +49,34 @@ export class AuthService {
   private _refreshing = false;
   readonly refreshDone$ = new BehaviorSubject<string | null>(null);
 
-  constructor(private http: HttpClient, private router: Router) {}
+  constructor(private http: HttpClient, private router: Router) {
+    this.migrateSessionToLocal();
+  }
+
+  /** One-time migration: move any existing sessionStorage session into localStorage */
+  private migrateSessionToLocal(): void {
+    for (const key of Object.values(KEYS)) {
+      const val = sessionStorage.getItem(key);
+      if (val && !localStorage.getItem(key)) {
+        localStorage.setItem(key, val);
+      }
+      sessionStorage.removeItem(key);
+    }
+  }
 
   // ── Token accessors ─────────────────────────────────────────────────────────
 
   getAccessToken(): string | null {
-    return sessionStorage.getItem(KEYS.ACCESS_TOKEN);
+    return localStorage.getItem(KEYS.ACCESS_TOKEN);
   }
 
   getRefreshToken(): string | null {
-    return sessionStorage.getItem(KEYS.REFRESH_TOKEN);
+    return localStorage.getItem(KEYS.REFRESH_TOKEN);
   }
 
   getUser(): StoredUser | null {
     try {
-      const raw = sessionStorage.getItem(KEYS.USER);
+      const raw = localStorage.getItem(KEYS.USER);
       return raw ? JSON.parse(raw) : null;
     } catch {
       return null;
@@ -71,6 +84,15 @@ export class AuthService {
   }
 
   getClientId(): string {
+    const user = this.getUser();
+    if (!user) return '';
+    const username = String(user.username || '').trim().toLowerCase();
+    if (username.includes('/')) return username.split('/')[0];
+    if (username) return username;
+    return user._id ?? '';
+  }
+
+  getAdminId(): string {
     return this.getUser()?._id ?? '';
   }
 
@@ -86,25 +108,25 @@ export class AuthService {
   // ── Session management ──────────────────────────────────────────────────────
 
   saveSession(res: LoginResponse): void {
-    sessionStorage.setItem(KEYS.ACCESS_TOKEN,  res.accessToken);
-    sessionStorage.setItem(KEYS.REFRESH_TOKEN, res.refreshToken);
+    localStorage.setItem(KEYS.ACCESS_TOKEN,  res.accessToken);
+    localStorage.setItem(KEYS.REFRESH_TOKEN, res.refreshToken);
 
     const { accessToken, refreshToken, expiresIn, ...userData } = res;
-    sessionStorage.setItem(KEYS.USER, JSON.stringify(userData));
+    localStorage.setItem(KEYS.USER, JSON.stringify(userData));
   }
 
   updateAccessToken(token: string): void {
-    sessionStorage.setItem(KEYS.ACCESS_TOKEN, token);
+    localStorage.setItem(KEYS.ACCESS_TOKEN, token);
   }
 
   updateRefreshToken(token: string): void {
-    sessionStorage.setItem(KEYS.REFRESH_TOKEN, token);
+    localStorage.setItem(KEYS.REFRESH_TOKEN, token);
   }
 
   clearSession(): void {
-    sessionStorage.removeItem(KEYS.ACCESS_TOKEN);
-    sessionStorage.removeItem(KEYS.REFRESH_TOKEN);
-    sessionStorage.removeItem(KEYS.USER);
+    localStorage.removeItem(KEYS.ACCESS_TOKEN);
+    localStorage.removeItem(KEYS.REFRESH_TOKEN);
+    localStorage.removeItem(KEYS.USER);
   }
 
   // ── HTTP calls ──────────────────────────────────────────────────────────────
